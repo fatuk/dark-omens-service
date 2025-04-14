@@ -2,6 +2,7 @@ import { SpellRepository } from "repositories/SpellRepository";
 import { AssetRepository } from "./repositories/AssetRepository";
 import { AllDecksManager } from "services/AllDeckManager";
 import { ConditionRepository } from "repositories/ConditionRepository";
+import { GameService } from "services/GameService";
 
 const savedState = {
   asset: {
@@ -26,25 +27,33 @@ const init = async () => {
   const spellRepo = new SpellRepository();
   const conditionRepo = new ConditionRepository();
 
-  const [assetsMap, spellsMap, conditionsMap] = await Promise.all([
+  const [assetDb, spellDb, conditionDb] = await Promise.all([
     assetRepo.getMap(),
     spellRepo.getMap(),
     conditionRepo.getMap(),
   ]);
 
   const allDecks = new AllDecksManager({
-    asset: { deck: [], db: assetsMap },
-    spell: { deck: [], db: spellsMap },
+    asset: { deck: [], db: assetDb },
+    spell: { deck: [], db: spellDb },
     condition: {
       deck: [],
-      db: conditionsMap,
+      db: conditionDb,
     },
   });
-  allDecks.restoreFromState(savedState, {
-    asset: assetsMap,
-    spell: spellsMap,
-    condition: conditionsMap,
-  });
-  window.allDecks = allDecks;
+
+  const game = new GameService(allDecks);
+  game.restoreFromState(
+    {
+      decks: savedState,
+      log: [],
+    },
+    {
+      asset: assetDb,
+      spell: spellDb,
+      condition: conditionDb,
+    }
+  );
+  window.game = game;
 };
 init();

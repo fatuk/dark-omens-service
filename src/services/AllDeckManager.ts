@@ -2,6 +2,7 @@ import { Condition } from "types/Condition";
 import { Asset } from "types/Asset";
 import { Spell } from "types/Spell";
 import { DeckManager, DeckManagerState } from "./DeckManager";
+import { Card, CardType } from "types/Card";
 
 export class AllDecksManager {
   asset: DeckManager<Asset>;
@@ -26,14 +27,16 @@ export class AllDecksManager {
   draw(type: "asset"): Asset | null;
   draw(type: "spell"): Spell | null;
   draw(type: "condition"): Condition | null;
-  draw(type: "asset" | "spell" | "condition") {
+  draw(type: CardType): Card | null;
+  draw(type: CardType) {
     return this[type].draw();
   }
 
   shuffle(type: "asset"): void;
   shuffle(type: "spell"): void;
   shuffle(type: "condition"): void;
-  shuffle(type: "asset" | "spell" | "condition") {
+  shuffle(type: CardType): Card | void;
+  shuffle(type: CardType) {
     this[type].shuffleDrawPile();
   }
 

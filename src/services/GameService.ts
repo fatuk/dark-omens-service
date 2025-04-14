@@ -1,29 +1,59 @@
-import { Card } from "types/Card";
-import { DeckManager } from "./DeckManager";
-import { AssetRepository } from "repositories/AssetRepository";
+import { AllDecksManager } from "./AllDeckManager";
+import { DeckManagerState } from "./DeckManager";
+import { Asset } from "types/Asset";
+import { Spell } from "types/Spell";
+import { Condition } from "types/Condition";
+import { Card, CardType } from "types/Card";
+
+export type GameState = {
+  decks: {
+    asset: DeckManagerState;
+    spell: DeckManagerState;
+    condition: DeckManagerState;
+  };
+  log: string[];
+};
 
 export class GameService {
-  private cardDb: Map<string, Card>;
-  private deckManager: DeckManager;
+  private decks: AllDecksManager;
+  private log: string[] = [];
 
-  constructor(cardDb: Map<string, Card>) {
-    this.cardDb = cardDb;
-    this.deckManager = new DeckManager(cardDb);
+  constructor(decks: AllDecksManager) {
+    this.decks = decks;
   }
 
-  async init() {
-    const assetRepo = new AssetRepository();
-    const assets = await assetRepo.getAll();
-    this.deckManager.initializeDeck("asset", assets);
+  drawCard(type: CardType): Card | null {
+    const card = this.decks.draw(type);
+    if (card) this.log.push(`Вытянута карта: ${card.name}`);
+    return card;
   }
 
-  drawAsset(): Card | null {
-    return this.deckManager.draw("asset");
+  discardCard(type: CardType, card: Card) {
+    this.decks[type].discard(card as any);
+    this.log.push(`Сброшена карта: ${card.name}`);
   }
 
-  save(): any {
+  shuffleDeck(type: CardType) {
+    this.decks.shuffle(type);
+    this.log.push(`Перемешана колода: ${type}`);
+  }
+
+  getState(): GameState {
     return {
-      deckManager: this.deckManager.getState(),
+      decks: this.decks.getState(),
+      log: [...this.log],
     };
+  }
+
+  restoreFromState(
+    state: GameState,
+    dbs: {
+      asset: Map<string, Asset>;
+      spell: Map<string, Spell>;
+      condition: Map<string, Condition>;
+    }
+  ) {
+    this.decks.restoreFromState(state.decks, dbs);
+    this.log = state.log;
   }
 }
