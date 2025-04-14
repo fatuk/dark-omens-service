@@ -6,7 +6,7 @@ import { GameService } from "services/GameService";
 
 const savedState = {
   asset: {
-    drawPile: ["asset_001", "asset_002"],
+    drawPile: ["asset_001", "asset_002", "asset_003", "asset_004", "asset_005"],
     discardPile: [],
     removedFromGame: [],
   },
@@ -27,33 +27,38 @@ const init = async () => {
   const spellRepo = new SpellRepository();
   const conditionRepo = new ConditionRepository();
 
-  const [assetDb, spellDb, conditionDb] = await Promise.all([
-    assetRepo.getMap(),
-    spellRepo.getMap(),
-    conditionRepo.getMap(),
+  const [assets, spells, conditions] = await Promise.all([
+    assetRepo.getAll(),
+    spellRepo.getAll(),
+    conditionRepo.getAll(),
   ]);
 
+  const assetDb = new Map(assets.map((c) => [c.id, c]));
+  const spellDb = new Map(spells.map((c) => [c.id, c]));
+  const conditionDb = new Map(conditions.map((c) => [c.id, c]));
+
   const allDecks = new AllDecksManager({
-    asset: { deck: [], db: assetDb },
-    spell: { deck: [], db: spellDb },
+    asset: { deck: assets, db: assetDb },
+    spell: { deck: spells, db: spellDb },
     condition: {
-      deck: [],
+      deck: conditions,
       db: conditionDb,
     },
   });
 
   const game = new GameService(allDecks);
-  game.restoreFromState(
-    {
-      decks: savedState,
-      log: [],
-    },
-    {
-      asset: assetDb,
-      spell: spellDb,
-      condition: conditionDb,
-    }
-  );
+  // game.restoreFromState(
+  //   {
+  //     decks: savedState,
+  //     log: [],
+  //     market: [],
+  //   },
+  //   {
+  //     asset: assetDb,
+  //     spell: spellDb,
+  //     condition: conditionDb,
+  //   }
+  // );
   window.game = game;
 };
 init();

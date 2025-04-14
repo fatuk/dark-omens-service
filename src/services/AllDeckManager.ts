@@ -2,42 +2,44 @@ import { Condition } from "types/Condition";
 import { Asset } from "types/Asset";
 import { Spell } from "types/Spell";
 import { DeckManager, DeckManagerState } from "./DeckManager";
-import { Card, CardType } from "types/Card";
+import { CardMap } from "types/Card";
 
 export class AllDecksManager {
-  asset: DeckManager<Asset>;
-  spell: DeckManager<Spell>;
-  condition: DeckManager<Condition>;
+  private decks: {
+    asset: DeckManager<Asset>;
+    spell: DeckManager<Spell>;
+    condition: DeckManager<Condition>;
+  };
 
   constructor(params: {
     asset: { deck: Asset[]; db: Map<string, Asset> };
     spell: { deck: Spell[]; db: Map<string, Spell> };
     condition: { deck: Condition[]; db: Map<string, Condition> };
   }) {
-    this.asset = new DeckManager(params.asset.db);
-    this.asset.initialize(params.asset.deck);
+    this.decks = {
+      asset: new DeckManager(params.asset.db),
+      spell: new DeckManager(params.spell.db),
+      condition: new DeckManager(params.condition.db),
+    };
 
-    this.spell = new DeckManager(params.spell.db);
-    this.spell.initialize(params.spell.deck);
-
-    this.condition = new DeckManager(params.condition.db);
-    this.condition.initialize(params.condition.deck);
+    this.decks.asset.initialize(params.asset.deck);
+    this.decks.spell.initialize(params.spell.deck);
+    this.decks.condition.initialize(params.condition.deck);
   }
 
-  draw(type: "asset"): Asset | null;
-  draw(type: "spell"): Spell | null;
-  draw(type: "condition"): Condition | null;
-  draw(type: CardType): Card | null;
-  draw(type: CardType) {
-    return this[type].draw();
+  draw<K extends keyof CardMap>(type: K): CardMap[K] | null {
+    const deckManager = this.decks[type] as DeckManager<CardMap[K]>;
+    return deckManager.draw();
   }
 
-  shuffle(type: "asset"): void;
-  shuffle(type: "spell"): void;
-  shuffle(type: "condition"): void;
-  shuffle(type: CardType): Card | void;
-  shuffle(type: CardType) {
-    this[type].shuffleDrawPile();
+  discard<K extends keyof CardMap>(type: K, card: CardMap[K]): void {
+    const deckManager = this.decks[type] as DeckManager<CardMap[K]>;
+    deckManager.discard(card);
+  }
+
+  shuffle<K extends keyof CardMap>(type: K): void {
+    const deckManager = this.decks[type] as DeckManager<CardMap[K]>;
+    deckManager.shuffleDrawPile();
   }
 
   getState(): {
@@ -46,9 +48,9 @@ export class AllDecksManager {
     condition: DeckManagerState;
   } {
     return {
-      asset: this.asset.getState(),
-      spell: this.spell.getState(),
-      condition: this.condition.getState(),
+      asset: this.decks.asset.getState(),
+      spell: this.decks.spell.getState(),
+      condition: this.decks.condition.getState(),
     };
   }
 
@@ -64,13 +66,14 @@ export class AllDecksManager {
       condition: Map<string, Condition>;
     }
   ) {
-    this.asset = new DeckManager(dbs.asset);
-    this.asset.restoreFromState(state.asset);
+    this.decks = {
+      asset: new DeckManager(dbs.asset),
+      spell: new DeckManager(dbs.spell),
+      condition: new DeckManager(dbs.condition),
+    };
 
-    this.spell = new DeckManager(dbs.spell);
-    this.spell.restoreFromState(state.spell);
-
-    this.condition = new DeckManager(dbs.condition);
-    this.condition.restoreFromState(state.condition);
+    this.decks.asset.restoreFromState(state.asset);
+    this.decks.spell.restoreFromState(state.spell);
+    this.decks.condition.restoreFromState(state.condition);
   }
 }
