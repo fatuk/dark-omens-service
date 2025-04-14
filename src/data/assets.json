@@ -1,0 +1,120 @@
+[
+  {
+    "id": "asset_001",
+    "name": "Knife",
+    "type": "asset",
+    "gameSet": "base",
+    "cost": 1,
+    "hasEffect": true,
+    "hasAction": false,
+    "hasSkillBonus": true,
+    "hasReroll": false,
+    "hasAdditionalDice": false,
+    "hasResultManipulation": false,
+    "hasDiscardEffect": false,
+    "hasReckoning": false,
+    "effects": [
+      {
+        "type": "skillModification",
+        "skill": "strength",
+        "contexts": ["combatEncounter"],
+        "details": {
+          "modification": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "asset_002",
+    "name": "Medical Textbook",
+    "type": "asset",
+    "gameSet": "base",
+    "cost": 2,
+    "hasEffect": true,
+    "hasAction": true,
+    "hasSkillBonus": false,
+    "hasReroll": false,
+    "hasAdditionalDice": false,
+    "hasResultManipulation": false,
+    "hasDiscardEffect": false,
+    "hasReckoning": false,
+    "effects": [
+      {
+        "type": "recovery",
+        "contexts": ["acquireAssets"],
+        "details": {
+          "additionalRecovery": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "asset_003",
+    "name": "Flashlight",
+    "type": "asset",
+    "gameSet": "base",
+    "cost": 1,
+    "hasEffect": false,
+    "hasAction": false,
+    "hasSkillBonus": false,
+    "hasReroll": true,
+    "hasAdditionalDice": false,
+    "hasResultManipulation": false,
+    "hasDiscardEffect": false,
+    "hasReckoning": false
+  },
+  {
+    "id": "asset_004",
+    "name": "First Aid Kit",
+    "type": "asset",
+    "gameSet": "base",
+    "cost": 3,
+    "hasEffect": true,
+    "hasAction": true,
+    "hasSkillBonus": false,
+    "hasReroll": false,
+    "hasAdditionalDice": false,
+    "hasResultManipulation": false,
+    "hasDiscardEffect": true,
+    "hasReckoning": false,
+    "effects": [
+      {
+        "type": "healing",
+        "contexts": ["combatEncounter"],
+        "details": {
+          "healingAmount": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "asset_005",
+    "name": "Emergency Cash",
+    "type": "asset",
+    "gameSet": "base",
+    "cost": 0,
+    "hasEffect": false,
+    "hasAction": false,
+    "hasSkillBonus": false,
+    "hasReroll": false,
+    "hasAdditionalDice": false,
+    "hasResultManipulation": false,
+    "hasDiscardEffect": false,
+    "hasReckoning": true
+  },
+  {
+    "id": "asset_006",
+    "name": "Old Book",
+    "type": "asset",
+    "gameSet": "base",
+    "cost": 2,
+    "hasEffect": true,
+    "hasAction": false,
+    "hasSkillBonus": false,
+    "hasReroll": false,
+    "hasAdditionalDice": false,
+    "hasResultManipulation": false,
+    "hasDiscardEffect": false,
+    "hasReckoning": false
+  }
+]

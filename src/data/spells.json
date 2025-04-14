@@ -1,0 +1,72 @@
+[
+  {
+    "id": "spell_alter_fate",
+    "name": "Alter Fate",
+    "text": "Test Lore (–1). If you pass, discard 1 Condition of your choice.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_arcane_insight",
+    "name": "Arcane Insight",
+    "text": "Test Lore (–1). If you pass, gain 2 Clues.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_astral_travel",
+    "name": "Astral Travel",
+    "text": "Test Lore (–1). If you pass, move to any space on the board.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_bind_monster",
+    "name": "Bind Monster",
+    "text": "Test Lore (–1). If you pass, choose a Monster on your space. It loses all of its abilities until the end of the Mythos Phase.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_blessing_of_isis",
+    "name": "Blessing of Isis",
+    "text": "Test Lore (–1). If you pass, you and another investigator on your space become Blessed.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_clairvoyance",
+    "name": "Clairvoyance",
+    "text": "Test Lore (–1). If you pass, look at the top 2 cards of the Mythos deck. Place them back in any order.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_dread_curse_of_azathoth",
+    "name": "Dread Curse of Azathoth",
+    "text": "Test Lore (–1). If you pass, gain +5 Strength during Combat encounters this round.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_flesh_ward",
+    "name": "Flesh Ward",
+    "text": "Test Lore (–1). If you pass, prevent up to 2 damage.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_mists_of_releh",
+    "name": "Mists of Releh",
+    "text": "Test Lore (–1). If you pass, you may move to an adjacent space.",
+    "type": "spell",
+    "gameSet": "base"
+  },
+  {
+    "id": "spell_poison_mist",
+    "name": "Poison Mist",
+    "text": "Test Lore (–1). If you pass, deal 2 damage to a Monster on your space.",
+    "type": "spell",
+    "gameSet": "base"
+  }
+]

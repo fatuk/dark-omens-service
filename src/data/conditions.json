@@ -1,0 +1,72 @@
+[
+  {
+    "id": "condition_cursed",
+    "name": "Cursed",
+    "text": "When resolving a test, only 6s count as successes.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_blessed",
+    "name": "Blessed",
+    "text": "When resolving a test, 5s and 6s count as successes.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_poisoned",
+    "name": "Poisoned",
+    "text": "During the Reckoning phase, lose 1 Health.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_injury_leg",
+    "name": "Injury: Leg",
+    "text": "Your movement is reduced by 1.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_injury_head",
+    "name": "Injury: Head",
+    "text": "Your Will is reduced by 1.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_madness_paranoia",
+    "name": "Madness: Paranoia",
+    "text": "During the Reckoning phase, test Will. If you fail, lose 1 Sanity.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_madness_hallucinations",
+    "name": "Madness: Hallucinations",
+    "text": "During the Reckoning phase, test Will. If you fail, discard 1 Ally asset.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_dark_pact",
+    "name": "Dark Pact",
+    "text": "During the Reckoning phase, roll 1 die. On a 1, resolve the effect on the back of this card.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_debt",
+    "name": "Debt",
+    "text": "During the Reckoning phase, roll 1 die. On a 1, resolve the effect on the back of this card.",
+    "type": "condition",
+    "gameSet": "base"
+  },
+  {
+    "id": "condition_hypothermia",
+    "name": "Hypothermia",
+    "text": "Your maximum Health is reduced by 1.",
+    "type": "condition",
+    "gameSet": "base"
+  }
+]
