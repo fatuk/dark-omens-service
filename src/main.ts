@@ -47,18 +47,18 @@ const init = async () => {
   });
 
   const game = new GameService(allDecks);
-  // game.restoreFromState(
-  //   {
-  //     decks: savedState,
-  //     log: [],
-  //     market: [],
-  //   },
-  //   {
-  //     asset: assetDb,
-  //     spell: spellDb,
-  //     condition: conditionDb,
-  //   }
-  // );
+  game.restoreFromState(
+    {
+      decks: savedState,
+      log: [],
+      market: ["asset_006", "asset_002", "asset_003", "asset_004"],
+    },
+    {
+      asset: assetDb,
+      spell: spellDb,
+      condition: conditionDb,
+    }
+  );
   window.game = game;
 };
 init();

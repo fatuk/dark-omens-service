@@ -8,7 +8,7 @@ import { GameAction } from "types/GameAction";
 
 export type GameState = {
   decks: { [K in keyof CardMap]: DeckManagerState };
-  market: Asset[];
+  market: string[];
   log: string[];
 };
 
@@ -41,7 +41,7 @@ export class GameService {
   getState(): GameState {
     return {
       decks: this.decks.getState(),
-      market: [...this.market],
+      market: this.market.map((c) => c.id),
       log: [...this.log],
     };
   }
@@ -78,6 +78,7 @@ export class GameService {
     }
   ) {
     this.decks.restoreFromState(state.decks, dbs);
+    this.market = state.market.map((id) => dbs.asset.get(id)!);
     this.log = state.log;
   }
 
