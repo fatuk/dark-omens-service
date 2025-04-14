@@ -1,11 +1,7 @@
+import { Asset } from "types/Asset";
 import { Card } from "types/Card";
+import { DeckManagerState } from "types/DeckManagerState";
 import { DeckState } from "types/DeckState";
-
-export type DeckManagerState = {
-  drawPile: string[];
-  discardPile: string[];
-  removedFromGame: string[];
-};
 
 export class DeckManager<T extends Card> {
   private deck: DeckState<T>;
@@ -44,6 +40,10 @@ export class DeckManager<T extends Card> {
       discardPile: this.deck.discardPile.map((card) => card.id),
       removedFromGame: this.deck.removedFromGame.map((card) => card.id),
     };
+  }
+
+  getCardById(id: string): T | null {
+    return this.cardDb.get(id) ?? null;
   }
 
   draw(): T | null {

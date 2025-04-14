@@ -1,8 +1,9 @@
 import { Condition } from "types/Condition";
 import { Asset } from "types/Asset";
 import { Spell } from "types/Spell";
-import { DeckManager, DeckManagerState } from "./DeckManager";
+import { DeckManager } from "./DeckManager";
 import { CardMap } from "types/Card";
+import { DeckManagerState } from "types/DeckManagerState";
 
 export class AllDecksManager {
   private decks: {
@@ -52,6 +53,11 @@ export class AllDecksManager {
       spell: this.decks.spell.getState(),
       condition: this.decks.condition.getState(),
     };
+  }
+
+  getCardById<K extends keyof CardMap>(type: K, id: string): CardMap[K] | null {
+    const deckManager = this.decks[type] as DeckManager<CardMap[K]>;
+    return deckManager.getCardById(id);
   }
 
   restoreFromState(

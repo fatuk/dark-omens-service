@@ -1,25 +1,56 @@
 import { AllDecksManager } from "./AllDeckManager";
-import { DeckManagerState } from "./DeckManager";
 import { Asset } from "types/Asset";
 import { Spell } from "types/Spell";
 import { Condition } from "types/Condition";
 import { CardMap, CardType } from "types/Card";
 import { GameAction } from "types/GameAction";
+import { DeckManagerState } from "types/DeckManagerState";
+import { PlayerState } from "types/PlayerState";
+
+export type Phase = "Action" | "Encounter" | "Mythos";
 
 export type GameState = {
+  turn: {
+    round: number;
+    phase: Phase;
+    leadInvestigatorId: string;
+    currentInvestigatorId: string;
+  };
   decks: { [K in keyof CardMap]: DeckManagerState };
   market: string[];
   log: string[];
+  players: PlayerState[];
 };
 
 export class GameService {
   private decks: AllDecksManager;
   private log: string[] = [];
   private market: Asset[] = [];
+  private turn: GameState["turn"] = {
+    round: 1,
+    phase: "Action",
+    leadInvestigatorId: "",
+    currentInvestigatorId: "",
+  };
+  private players: PlayerState[] = [];
 
-  constructor(decks: AllDecksManager) {
+  constructor(decks: AllDecksManager, players: PlayerState[]) {
     this.decks = decks;
+    this.players = players
+      .sort((a, b) => a.turnOrder - b.turnOrder)
+      .map((p) => ({ ...p, actionsTaken: [] }));
+    this.turn.leadInvestigatorId = this.players[0]?.id ?? "";
+    this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
     this.replenishMarket();
+  }
+
+  getPlayerState(playerId: string): (PlayerState & { assets: Asset[] }) | null {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player) return null;
+    const assets = player.assetIds
+      .map((id) => this.decks.getCardById("asset", id))
+      .filter(Boolean) as Asset[];
+    return { ...player, assets };
   }
 
   drawCard<T extends CardType>(type: T): CardMap[T] | null {
@@ -40,9 +71,11 @@ export class GameService {
 
   getState(): GameState {
     return {
+      turn: { ...this.turn },
       decks: this.decks.getState(),
       market: this.market.map((c) => c.id),
       log: [...this.log],
+      players: this.players,
     };
   }
 
@@ -53,7 +86,6 @@ export class GameService {
   replenishMarket() {
     while (this.market.length < 4) {
       const card = this.decks.draw("asset");
-
       if (!card) break;
       this.market.push(card);
       this.log.push(`Добавлена карта в маркет: ${card.name}`);
@@ -69,6 +101,93 @@ export class GameService {
     return card;
   }
 
+  canTakeAction(playerId: string, actionType: string): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player) return false;
+    return (
+      player.actionsTaken.length < 2 &&
+      !player.actionsTaken.includes(actionType)
+    );
+  }
+
+  recordAction(playerId: string, actionType: string): void {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player) return;
+    if (!player.actionsTaken.includes(actionType)) {
+      player.actionsTaken.push(actionType);
+      this.log.push(`Игрок ${playerId} выполнил действие: ${actionType}`);
+    }
+  }
+
+  resetActions(): void {
+    this.players.forEach((p) => (p.actionsTaken = []));
+    this.log.push("Все действия сброшены");
+  }
+
+  resolveEncounter(playerId: string): string {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player) return "Игрок не найден";
+
+    const locationId = player.locationId;
+    const type = this.getEncounterType(locationId);
+
+    this.log.push(
+      `Игрок ${playerId} проходит ${type} встречу в локации ${locationId}`
+    );
+    return type;
+  }
+
+  getEncounterType(locationId: string): string {
+    if (locationId.startsWith("city")) return "city";
+    if (locationId.startsWith("other")) return "otherWorld";
+    if (locationId === "expedition") return "expedition";
+    if (locationId === "mysticRuins") return "mysticRuins";
+    return "generic";
+  }
+
+  nextPhase() {
+    switch (this.turn.phase) {
+      case "Action":
+        this.turn.phase = "Encounter";
+        this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
+        this.resetActions();
+        this.log.push("Фаза: встречи");
+        break;
+      case "Encounter":
+        this.turn.phase = "Mythos";
+        this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
+        this.log.push("Фаза: мифов");
+        break;
+      case "Mythos":
+        this.turn.phase = "Action";
+        this.turn.round++;
+        this.passLeadInvestigator();
+        this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
+        this.resetActions();
+        this.log.push(`Раунд ${this.turn.round}`);
+        break;
+    }
+  }
+
+  nextInvestigator() {
+    const index = this.players.findIndex(
+      (p) => p.id === this.turn.currentInvestigatorId
+    );
+    if (index === -1) return;
+    const next = this.players[(index + 1) % this.players.length];
+    this.turn.currentInvestigatorId = next.id;
+    this.log.push(`Ход переходит к игроку: ${next.id}`);
+  }
+
+  passLeadInvestigator() {
+    const index = this.players.findIndex(
+      (p) => p.id === this.turn.leadInvestigatorId
+    );
+    const next = this.players[(index + 1) % this.players.length];
+    this.turn.leadInvestigatorId = next.id;
+    this.log.push(`Новый лидер: ${next.id}`);
+  }
+
   restoreFromState(
     state: GameState,
     dbs: {
@@ -77,9 +196,11 @@ export class GameService {
       condition: Map<string, Condition>;
     }
   ) {
+    this.turn = state.turn;
     this.decks.restoreFromState(state.decks, dbs);
     this.market = state.market.map((id) => dbs.asset.get(id)!);
     this.log = state.log;
+    this.players = state.players;
   }
 
   apply(action: GameAction) {
