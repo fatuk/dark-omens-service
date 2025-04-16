@@ -1,4 +1,3 @@
-import { Asset } from "types/Asset";
 import { Card } from "types/Card";
 import { DeckManagerState } from "types/DeckManagerState";
 import { DeckState } from "types/DeckState";

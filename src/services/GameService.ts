@@ -4,23 +4,13 @@ import { Spell } from "types/Spell";
 import { Condition } from "types/Condition";
 import { CardMap, CardType } from "types/Card";
 import { GameAction } from "types/GameAction";
-import { DeckManagerState } from "types/DeckManagerState";
 import { PlayerState } from "types/PlayerState";
+import { GameState } from "types/GameState";
+import { Gate } from "types/Gate";
+import { DeckManagerState } from "types/DeckManagerState";
 
-export type Phase = "Action" | "Encounter" | "Mythos";
-
-export type GameState = {
-  turn: {
-    round: number;
-    phase: Phase;
-    leadInvestigatorId: string;
-    currentInvestigatorId: string;
-  };
-  decks: { [K in keyof CardMap]: DeckManagerState };
-  market: string[];
-  log: string[];
-  players: PlayerState[];
-};
+const MAX_ACTIONS_PER_PLAYER = 2;
+const MAX_MARKET_CARDS = 4;
 
 export class GameService {
   private decks: AllDecksManager;
@@ -33,6 +23,7 @@ export class GameService {
     currentInvestigatorId: "",
   };
   private players: PlayerState[] = [];
+  private openGates: string[] = [];
 
   constructor(decks: AllDecksManager, players: PlayerState[]) {
     this.decks = decks;
@@ -44,13 +35,40 @@ export class GameService {
     this.replenishMarket();
   }
 
-  getPlayerState(playerId: string): (PlayerState & { assets: Asset[] }) | null {
+  drawGate(): Gate | null {
+    const gate = this.decks.draw("gate") as Gate | null;
+    if (!gate) return null;
+    this.openGates.push(gate.location);
+    this.log.push(`Открылись врата в ${gate.location} (${gate.color})`);
+    return gate;
+  }
+
+  closeGate(locationName: string): boolean {
+    const index = this.openGates.findIndex((gate) => gate === locationName);
+    if (index === -1) return false;
+    this.openGates.splice(index, 1);
+    this.log.push(`Врата в ${locationName} были закрыты`);
+    return true;
+  }
+
+  getOpenedGatesState(): Gate[] {
+    return this.openGates
+      .map((location) => this.decks.getCardById("gate", location))
+      .filter(Boolean) as Gate[];
+  }
+
+  getPlayerState(
+    playerId: string
+  ): (PlayerState & { assets: Asset[]; conditions: Condition[] }) | null {
     const player = this.players.find((p) => p.id === playerId);
     if (!player) return null;
     const assets = player.assetIds
       .map((id) => this.decks.getCardById("asset", id))
       .filter(Boolean) as Asset[];
-    return { ...player, assets };
+    const conditions = player.conditionIds
+      .map((id) => this.decks.getCardById("condition", id))
+      .filter(Boolean) as Condition[];
+    return { ...player, assets, conditions };
   }
 
   drawCard<T extends CardType>(type: T): CardMap[T] | null {
@@ -72,19 +90,20 @@ export class GameService {
   getState(): GameState {
     return {
       turn: { ...this.turn },
-      decks: this.decks.getState(),
       market: this.market.map((c) => c.id),
       log: [...this.log],
       players: this.players,
+      openGates: [...this.openGates],
+      decks: this.decks.getState(),
     };
   }
 
-  getMarket(): Asset[] {
+  getMarketState(): Asset[] {
     return [...this.market];
   }
 
   replenishMarket() {
-    while (this.market.length < 4) {
+    while (this.market.length < MAX_MARKET_CARDS) {
       const card = this.decks.draw("asset");
       if (!card) break;
       this.market.push(card);
@@ -105,7 +124,7 @@ export class GameService {
     const player = this.players.find((p) => p.id === playerId);
     if (!player) return false;
     return (
-      player.actionsTaken.length < 2 &&
+      player.actionsTaken.length < MAX_ACTIONS_PER_PLAYER &&
       !player.actionsTaken.includes(actionType)
     );
   }
@@ -194,6 +213,7 @@ export class GameService {
       asset: Map<string, Asset>;
       spell: Map<string, Spell>;
       condition: Map<string, Condition>;
+      gate: Map<string, Gate>;
     }
   ) {
     this.turn = state.turn;
@@ -201,6 +221,7 @@ export class GameService {
     this.market = state.market.map((id) => dbs.asset.get(id)!);
     this.log = state.log;
     this.players = state.players;
+    this.openGates = state.openGates;
   }
 
   apply(action: GameAction) {

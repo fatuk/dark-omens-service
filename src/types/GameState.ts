@@ -14,4 +14,5 @@ export type GameState = {
   market: string[];
   log: string[];
   players: PlayerState[];
+  openGates: string[];
 };

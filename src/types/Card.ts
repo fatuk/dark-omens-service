@@ -6,6 +6,7 @@ export type CardMap = {
   asset: Asset;
   spell: Spell;
   condition: Condition;
+  gate: Card;
 };
 
 export type CardType = keyof CardMap;

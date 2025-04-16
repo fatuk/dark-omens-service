@@ -1,0 +1,38 @@
+[
+  {
+    "id": "Arkhem",
+    "name": "Arkhem",
+    "text": "The gates of Arkhem are known for their eerie glow and strange sounds.",
+    "location": "Arkhem",
+    "color": "red",
+    "type": "gate",
+    "gameSet": "base"
+  },
+  {
+    "id": "London",
+    "name": "London",
+    "text": "The gates of London are often shrouded in fog, making them difficult to see.",
+    "location": "London",
+    "color": "blue",
+    "type": "gate",
+    "gameSet": "base"
+  },
+  {
+    "id": "San Francisco",
+    "name": "San Francisco",
+    "text": "The gates of San Francisco are known for their vibrant colors and bustling activity.",
+    "location": "San Francisco",
+    "color": "green",
+    "type": "gate",
+    "gameSet": "base"
+  },
+  {
+    "id": "Paris",
+    "name": "Paris",
+    "text": "The gates of Paris are often adorned with beautiful art and architecture.",
+    "location": "Paris",
+    "color": "red",
+    "type": "gate",
+    "gameSet": "base"
+  }
+]
