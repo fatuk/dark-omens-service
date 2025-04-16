@@ -75,7 +75,7 @@ export class GameService {
 
   getOpenedGatesState(): Gate[] {
     return this.openGates
-      .map((location) => this.decks.getCardById("gate", location))
+      .map((location) => this.decks.getCardById("gate", `gate-${location}`))
       .filter(Boolean) as Gate[];
   }
 
