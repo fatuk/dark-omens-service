@@ -15,4 +15,5 @@ export type GameState = {
   log: string[];
   players: PlayerState[];
   openGates: string[];
+  clues: string[];
 };

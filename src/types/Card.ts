@@ -1,4 +1,5 @@
 import { Asset } from "./Asset";
+import { Clue } from "./Clue";
 import { Condition } from "./Condition";
 import { Gate } from "./Gate";
 import { Spell } from "./Spell";
@@ -8,6 +9,7 @@ export type CardMap = {
   spell: Spell;
   condition: Condition;
   gate: Gate;
+  clue: Clue;
 };
 
 export type CardType = keyof CardMap;

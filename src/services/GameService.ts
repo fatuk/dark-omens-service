@@ -1,12 +1,12 @@
 import { AllDecksManager } from "./AllDeckManager";
 import { Asset } from "types/Asset";
-import { Spell } from "types/Spell";
 import { Condition } from "types/Condition";
 import { CardMap, CardType } from "types/Card";
 import { GameAction } from "types/GameAction";
 import { PlayerState } from "types/PlayerState";
 import { GameState } from "types/GameState";
 import { Gate } from "types/Gate";
+import { Clue } from "types/Clue";
 
 const MAX_ACTIONS_PER_PLAYER = 2;
 const MAX_MARKET_CARDS = 4;
@@ -23,6 +23,7 @@ export class GameService {
   };
   private players: PlayerState[] = [];
   private openGates: string[] = [];
+  private clues: string[] = [];
 
   constructor(decks: AllDecksManager, players: PlayerState[]) {
     this.decks = decks;
@@ -32,6 +33,28 @@ export class GameService {
     this.turn.leadInvestigatorId = this.players[0]?.id ?? "";
     this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
     this.replenishMarket();
+  }
+
+  drawClue(): string | null {
+    const clue = this.decks.draw("clue");
+    if (!clue) return null;
+    this.clues.push(clue.id);
+    this.log.push(`Выложена улика: ${clue.name}`);
+    return clue.id;
+  }
+
+  discardClue(clueId: string): boolean {
+    const index = this.clues.findIndex((clue) => clue === clueId);
+    if (index === -1) return false;
+    this.clues.splice(index, 1);
+    this.log.push(`Улика ${clueId} сброшена`);
+    return true;
+  }
+
+  getCluesState(): Clue[] {
+    return this.clues
+      .map((clueId) => this.decks.getCardById("clue", clueId))
+      .filter(Boolean) as Clue[];
   }
 
   drawGate(): Gate | null {
@@ -94,6 +117,7 @@ export class GameService {
       players: this.players,
       openGates: [...this.openGates],
       decks: this.decks.getState(),
+      clues: [...this.clues],
     };
   }
 
@@ -209,10 +233,7 @@ export class GameService {
   restoreFromState(
     state: GameState,
     dbs: {
-      asset: Map<string, Asset>;
-      spell: Map<string, Spell>;
-      condition: Map<string, Condition>;
-      gate: Map<string, Gate>;
+      [K in keyof CardMap]: Map<string, CardMap[K]>;
     }
   ) {
     this.turn = state.turn;
@@ -221,6 +242,7 @@ export class GameService {
     this.log = state.log;
     this.players = state.players;
     this.openGates = state.openGates;
+    this.clues = state.clues;
   }
 
   apply(action: GameAction) {

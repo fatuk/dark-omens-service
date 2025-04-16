@@ -1,0 +1,34 @@
+[
+  {
+    "id": "Arkhem",
+    "name": "Arkhem",
+    "text": "Clue found in Arkhem.",
+    "location": "Arkhem",
+    "type": "clue",
+    "gameSet": "base"
+  },
+  {
+    "id": "London",
+    "name": "London",
+    "text": "Clue found in London.",
+    "location": "London",
+    "type": "clue",
+    "gameSet": "base"
+  },
+  {
+    "id": "San Francisco",
+    "name": "San Francisco",
+    "text": "Clue found in San Francisco.",
+    "location": "San Francisco",
+    "type": "clue",
+    "gameSet": "base"
+  },
+  {
+    "id": "Paris",
+    "name": "Paris",
+    "text": "Clue found in Paris.",
+    "location": "Paris",
+    "type": "clue",
+    "gameSet": "base"
+  }
+]
