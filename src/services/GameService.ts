@@ -7,7 +7,6 @@ import { GameAction } from "types/GameAction";
 import { PlayerState } from "types/PlayerState";
 import { GameState } from "types/GameState";
 import { Gate } from "types/Gate";
-import { DeckManagerState } from "types/DeckManagerState";
 
 const MAX_ACTIONS_PER_PLAYER = 2;
 const MAX_MARKET_CARDS = 4;

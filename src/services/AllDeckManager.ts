@@ -1,95 +1,63 @@
-import { Condition } from "types/Condition";
-import { Asset } from "types/Asset";
-import { Spell } from "types/Spell";
 import { DeckManager } from "./DeckManager";
 import { CardMap } from "types/Card";
 import { DeckManagerState } from "types/DeckManagerState";
-import { Gate } from "types/Gate";
+
+type Decks = { [K in keyof CardMap]: DeckManager<CardMap[K]> };
+type InitParams = {
+  [K in keyof CardMap]: {
+    deck: CardMap[K][];
+    db: Map<string, CardMap[K]>;
+  };
+};
 
 export class AllDecksManager {
-  private decks: {
-    asset: DeckManager<Asset>;
-    spell: DeckManager<Spell>;
-    condition: DeckManager<Condition>;
-    gate: DeckManager<Gate>;
-  };
+  private decks: Decks;
 
-  constructor(params: {
-    asset: { deck: Asset[]; db: Map<string, Asset> };
-    spell: { deck: Spell[]; db: Map<string, Spell> };
-    condition: { deck: Condition[]; db: Map<string, Condition> };
-    gate: { deck: Gate[]; db: Map<string, Gate> };
-  }) {
-    this.decks = {
-      asset: new DeckManager(params.asset.db),
-      spell: new DeckManager(params.spell.db),
-      condition: new DeckManager(params.condition.db),
-      gate: new DeckManager(params.gate.db),
-    };
+  constructor(params: InitParams) {
+    const entries = (Object.keys(params) as Array<keyof CardMap>).map((k) => {
+      const { deck, db } = params[k];
+      const mgr = new DeckManager<CardMap[typeof k]>(db);
+      mgr.initialize(deck);
+      return [k, mgr] as const;
+    });
 
-    this.decks.asset.initialize(params.asset.deck);
-    this.decks.spell.initialize(params.spell.deck);
-    this.decks.condition.initialize(params.condition.deck);
-    this.decks.gate.initialize(params.gate.deck);
+    this.decks = Object.fromEntries(entries) as Decks;
   }
 
   draw<K extends keyof CardMap>(type: K): CardMap[K] | null {
-    const deckManager = this.decks[type] as DeckManager<CardMap[K]>;
-    return deckManager.draw();
+    return this.decks[type].draw();
   }
 
   discard<K extends keyof CardMap>(type: K, card: CardMap[K]): void {
-    const deckManager = this.decks[type] as DeckManager<CardMap[K]>;
-    deckManager.discard(card);
+    this.decks[type].discard(card);
   }
 
   shuffle<K extends keyof CardMap>(type: K): void {
-    const deckManager = this.decks[type] as DeckManager<CardMap[K]>;
-    deckManager.shuffleDrawPile();
-  }
-
-  getState(): {
-    asset: DeckManagerState;
-    spell: DeckManagerState;
-    condition: DeckManagerState;
-    gate: DeckManagerState;
-  } {
-    return {
-      asset: this.decks.asset.getState(),
-      spell: this.decks.spell.getState(),
-      condition: this.decks.condition.getState(),
-      gate: this.decks.gate.getState(),
-    };
+    this.decks[type].shuffleDrawPile();
   }
 
   getCardById<K extends keyof CardMap>(type: K, id: string): CardMap[K] | null {
-    const deckManager = this.decks[type] as DeckManager<CardMap[K]>;
-    return deckManager.getCardById(id);
+    return this.decks[type].getCardById(id);
+  }
+
+  getState(): { [K in keyof CardMap]: DeckManagerState } {
+    const stateEntries = (Object.keys(this.decks) as Array<keyof CardMap>).map(
+      (k) => [k, this.decks[k].getState()] as const
+    );
+    return Object.fromEntries(stateEntries) as {
+      [K in keyof CardMap]: DeckManagerState;
+    };
   }
 
   restoreFromState(
-    state: {
-      asset: DeckManagerState;
-      spell: DeckManagerState;
-      condition: DeckManagerState;
-      gate: DeckManagerState;
-    },
-    dbs: {
-      asset: Map<string, Asset>;
-      spell: Map<string, Spell>;
-      condition: Map<string, Condition>;
-      gate: Map<string, Gate>;
-    }
+    state: { [K in keyof CardMap]: DeckManagerState },
+    dbs: { [K in keyof CardMap]: Map<string, CardMap[K]> }
   ) {
-    this.decks = {
-      asset: new DeckManager(dbs.asset),
-      spell: new DeckManager(dbs.spell),
-      condition: new DeckManager(dbs.condition),
-      gate: new DeckManager(dbs.gate),
-    };
-
-    this.decks.asset.restoreFromState(state.asset);
-    this.decks.spell.restoreFromState(state.spell);
-    this.decks.condition.restoreFromState(state.condition);
+    const entries = (Object.keys(dbs) as Array<keyof CardMap>).map((k) => {
+      const mgr = new DeckManager<CardMap[typeof k]>(dbs[k]);
+      mgr.restoreFromState(state[k]);
+      return [k, mgr] as const;
+    });
+    this.decks = Object.fromEntries(entries) as Decks;
   }
 }

@@ -37,7 +37,15 @@ const init = async () => {
 
   const game = new GameService(allDecks, players);
 
-  // game.restoreFromState({})
+  // game.restoreFromState(
+  //   {},
+  //   {
+  //     asset: assetDb,
+  //     spell: spellDb,
+  //     condition: conditionDb,
+  //     gate: gateDb,
+  //   }
+  // );
   window.game = game;
 };
 init();
