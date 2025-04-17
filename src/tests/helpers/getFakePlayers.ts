@@ -19,5 +19,8 @@ export const getFakePlayers = (count: number): PlayerState[] => {
     clueCount: faker.number.int({ min: 0, max: 10 }),
     focusCount: faker.number.int({ min: 0, max: 2 }),
     resourceCount: faker.number.int({ min: 0, max: 2 }),
+    isDefeated: false,
+    isEliminated: false,
+    deathReason: null,
   }));
 };

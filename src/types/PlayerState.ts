@@ -15,4 +15,7 @@ export type PlayerState = {
   clueCount: number;
   focusCount: number;
   resourceCount: number;
+  isDefeated: boolean;
+  isEliminated: boolean;
+  deathReason: "injury" | "sanity" | null;
 };

@@ -242,6 +242,63 @@ export class GameService {
     return true;
   }
 
+  healHealth(playerId: string, amount: number): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+
+    if (!player || amount <= 0 || player.isDefeated) return false;
+
+    const before = player.health;
+    player.health = Math.min(player.health + amount, player.maxHealth);
+
+    this.log.push(
+      `Игрок ${playerId} восстановил здоровье: ${before} → ${player.health}`
+    );
+    return true;
+  }
+
+  loseHealth(playerId: string, amount: number): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+
+    if (!player || amount <= 0 || player.isDefeated) return false;
+
+    const before = player.health;
+    player.health = Math.max(player.health - amount, 0);
+    this.log.push(
+      `Игрок ${playerId} потерял здоровье: ${before} → ${player.health}`
+    );
+    if (player.health === 0) {
+      player.isDefeated = true;
+      this.log.push(`Игрок ${playerId} пал от ран.`);
+    }
+    return true;
+  }
+
+  healSanity(playerId: string, amount: number): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || amount <= 0 || player.isDefeated) return false;
+    const before = player.sanity;
+    player.sanity = Math.min(player.sanity + amount, player.maxSanity);
+    this.log.push(
+      `Игрок ${playerId} восстановил рассудок: ${before} → ${player.sanity}`
+    );
+    return true;
+  }
+
+  loseSanity(playerId: string, amount: number): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || amount <= 0 || player.isDefeated) return false;
+    const before = player.sanity;
+    player.sanity = Math.max(player.sanity - amount, 0);
+    this.log.push(
+      `Игрок ${playerId} потерял рассудок: ${before} → ${player.sanity}`
+    );
+    if (player.sanity === 0) {
+      player.isDefeated = true;
+      this.log.push(`Игрок ${playerId} пал от ужаса.`);
+    }
+    return true;
+  }
+
   restoreFromState(
     state: GameState,
     dbs: {
