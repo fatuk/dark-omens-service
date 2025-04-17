@@ -230,6 +230,18 @@ export class GameService {
     this.log.push(`Новый лидер: ${next.id}`);
   }
 
+  movePlayer(playerId: string, locationId: string): boolean {
+    if (!this.canTakeAction(playerId, "move")) return false;
+
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player) return false;
+
+    player.locationId = locationId;
+    this.recordAction(playerId, "move");
+    this.log.push(`Игрок ${playerId} переместился в локацию ${locationId}`);
+    return true;
+  }
+
   restoreFromState(
     state: GameState,
     dbs: {

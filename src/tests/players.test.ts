@@ -45,4 +45,14 @@ describe("Player mechanics", () => {
     expect(state1.actionsTaken).toEqual([]);
     expect(state2.actionsTaken).toEqual([]);
   });
+
+  test("canTakeAction возвращает true только если действий < 2 и они уникальны", () => {
+    const playerId = game.getState().players[0].id;
+    expect(game.canTakeAction(playerId, "rest")).toBe(true);
+    game.recordAction(playerId, "rest");
+    expect(game.canTakeAction(playerId, "rest")).toBe(false);
+    expect(game.canTakeAction(playerId, "trade")).toBe(true);
+    game.recordAction(playerId, "trade");
+    expect(game.canTakeAction(playerId, "move")).toBe(false);
+  });
 });

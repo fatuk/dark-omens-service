@@ -5,7 +5,9 @@ export type PlayerState = {
   turnOrder: number;
   isOnline: boolean;
   health: number;
+  maxHealth: number;
   sanity: number;
+  maxSanity: number;
   locationId: string;
   assetIds: string[];
   actionsTaken: string[];
