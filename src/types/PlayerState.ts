@@ -17,5 +17,5 @@ export type PlayerState = {
   resourceCount: number;
   isDefeated: boolean;
   isEliminated: boolean;
-  deathReason: "injury" | "sanity" | null;
+  deathReason?: "injury" | "sanity" | null;
 };

@@ -7,14 +7,13 @@ import { PlayerState } from "types/PlayerState";
 import { GameState } from "types/GameState";
 import { Gate } from "types/Gate";
 import { Clue } from "types/Clue";
+import { Services } from "types/Services";
 
 const MAX_ACTIONS_PER_PLAYER = 2;
-const MAX_MARKET_CARDS = 4;
 
 export class GameService {
   private decks: AllDecksManager;
   private log: string[] = [];
-  private market: Asset[] = [];
   private turn: GameState["turn"] = {
     round: 1,
     phase: "Action",
@@ -24,15 +23,21 @@ export class GameService {
   private players: PlayerState[] = [];
   private openGates: string[] = [];
   private clues: string[] = [];
+  private services: Services;
 
-  constructor(decks: AllDecksManager, players: PlayerState[]) {
+  constructor(
+    decks: AllDecksManager,
+    players: PlayerState[],
+    services: Services
+  ) {
     this.decks = decks;
     this.players = players
       .sort((a, b) => a.turnOrder - b.turnOrder)
       .map((p) => ({ ...p, actionsTaken: [] }));
     this.turn.leadInvestigatorId = this.players[0]?.id ?? "";
     this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
-    this.replenishMarket();
+    this.services = services;
+    this.services.marketService.replenish();
   }
 
   drawClue(): string | null {
@@ -112,8 +117,8 @@ export class GameService {
   getState(): GameState {
     return {
       turn: { ...this.turn },
-      market: this.market.map((c) => c.id),
-      log: [...this.log],
+      market: this.services.marketService.getAll().map((c) => c.id),
+      log: this.services.logService.get(),
       players: this.players,
       openGates: [...this.openGates],
       decks: this.decks.getState(),
@@ -122,25 +127,15 @@ export class GameService {
   }
 
   getMarketState(): Asset[] {
-    return [...this.market];
+    return this.services.marketService.getAll();
   }
 
-  replenishMarket() {
-    while (this.market.length < MAX_MARKET_CARDS) {
-      const card = this.decks.draw("asset");
-      if (!card) break;
-      this.market.push(card);
-      this.log.push(`Добавлена карта в маркет: ${card.name}`);
-    }
+  replenishMarket(): void {
+    this.services.marketService.replenish();
   }
 
   buyFromMarket(cardId: string): Asset | null {
-    const index = this.market.findIndex((c) => c.id === cardId);
-    if (index === -1) return null;
-    const [card] = this.market.splice(index, 1);
-    this.log.push(`Куплена карта: ${card.name}`);
-    this.replenishMarket();
-    return card;
+    return this.services.marketService.buy(cardId);
   }
 
   canTakeAction(playerId: string, actionType: string): boolean {
@@ -326,6 +321,6 @@ export class GameService {
   }
 
   getLog(): string[] {
-    return [...this.log];
+    return this.services.logService.get();
   }
 }

@@ -7,20 +7,20 @@ import { GameService } from "services/GameService";
 import players from "data/players.json";
 import { GateRepository } from "repositories/GateRepository";
 import { ClueRepository } from "repositories/ClueRepository";
+import { LogService } from "services/LogService";
+import { MarketService, MarketState } from "services/MarketService";
+
+const gameState = {
+  market: [] as string[],
+};
 
 const init = async () => {
-  const assetRepo = new AssetRepository();
-  const spellRepo = new SpellRepository();
-  const conditionRepo = new ConditionRepository();
-  const gateRepo = new GateRepository();
-  const clueRepo = new ClueRepository();
-
   const [assets, spells, conditions, gates, clues] = await Promise.all([
-    assetRepo.getAll(),
-    spellRepo.getAll(),
-    conditionRepo.getAll(),
-    gateRepo.getAll(),
-    clueRepo.getAll(),
+    new AssetRepository().getAll(),
+    new SpellRepository().getAll(),
+    new ConditionRepository().getAll(),
+    new GateRepository().getAll(),
+    new ClueRepository().getAll(),
   ]);
 
   const assetDb = new Map(assets.map((c) => [c.id, c]));
@@ -40,7 +40,23 @@ const init = async () => {
     clue: { deck: clues, db: clueDb },
   });
 
-  const game = new GameService(allDecks, players);
+  const logService = new LogService();
+  const marketState: MarketState = {
+    getMarketIds: () => gameState.market,
+    setMarketIds: (ids) => {
+      gameState.market = ids;
+    },
+    getAssetById: (id) => assetDb.get(id),
+  };
+  const assetDeck = allDecks.getManager("asset");
+  const marketService = new MarketService(assetDeck, marketState, logService);
+
+  const services = {
+    logService,
+    marketService,
+  };
+
+  const game = new GameService(allDecks, players, services);
 
   // game.restoreFromState(
   //   {},

@@ -15,7 +15,9 @@
     "conditionIds": ["condition_cursed"],
     "clueCount": 1,
     "focusCount": 1,
-    "resourceCount": 1
+    "resourceCount": 1,
+    "isEliminated": false,
+    "isDefeated": false
   },
   {
     "id": "player_002",
@@ -33,7 +35,9 @@
     "conditionIds": [],
     "clueCount": 0,
     "focusCount": 0,
-    "resourceCount": 2
+    "resourceCount": 2,
+    "isEliminated": false,
+    "isDefeated": false
   },
   {
     "id": "player_003",
@@ -51,7 +55,9 @@
     "conditionIds": ["condition_002"],
     "clueCount": 2,
     "focusCount": 1,
-    "resourceCount": 0
+    "resourceCount": 0,
+    "isEliminated": false,
+    "isDefeated": false
   },
   {
     "id": "player_004",
@@ -69,6 +75,8 @@
     "conditionIds": ["condition_003"],
     "clueCount": 0,
     "focusCount": 2,
-    "resourceCount": 3
+    "resourceCount": 3,
+    "isEliminated": false,
+    "isDefeated": false
   }
 ]

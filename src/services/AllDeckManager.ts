@@ -60,4 +60,8 @@ export class AllDecksManager {
     });
     this.decks = Object.fromEntries(entries) as Decks;
   }
+
+  getManager<K extends keyof CardMap>(type: K): DeckManager<CardMap[K]> {
+    return this.decks[type];
+  }
 }

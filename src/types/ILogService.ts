@@ -1,0 +1,5 @@
+export interface ILogService {
+  add(message: string): void;
+  get(): string[];
+  clear(): void;
+}

@@ -8,6 +8,7 @@ export default defineConfig({
       repositories: path.resolve(__dirname, "src/repositories"),
       services: path.resolve(__dirname, "src/services"),
       constants: path.resolve(__dirname, "src/constants"),
+      helpers: path.resolve(__dirname, "src/helpers"),
     },
   },
   base: "/",
