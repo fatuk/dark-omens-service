@@ -3,14 +3,9 @@ import { resolveCards } from "helpers/resolveCards";
 import { DeckManager } from "./DeckManager";
 import { ILogService } from "types/ILogService";
 import { IMarketService } from "types/IMarketService";
+import { MarketState } from "types/MarketState";
 
 const DEFAULT_MAX_MARKET_CARDS = 4;
-
-export interface MarketState {
-  getMarketIds(): string[];
-  setMarketIds(ids: string[]): void;
-  getAssetById(id: string): Asset | undefined;
-}
 
 export class MarketService implements IMarketService {
   private readonly maxSize: number;

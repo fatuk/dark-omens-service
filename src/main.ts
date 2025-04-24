@@ -8,11 +8,12 @@ import players from "data/players.json";
 import { GateRepository } from "repositories/GateRepository";
 import { ClueRepository } from "repositories/ClueRepository";
 import { LogService } from "services/LogService";
-import { MarketService, MarketState } from "services/MarketService";
-
-const gameState = {
-  market: [] as string[],
-};
+import { MarketService } from "services/MarketService";
+import { MarketState } from "types/MarketState";
+import { ClueState } from "types/ClueState";
+import { GameState } from "types/GameState";
+import { ClueService } from "services/ClueService";
+import { Services } from "types/Services";
 
 const init = async () => {
   const [assets, spells, conditions, gates, clues] = await Promise.all([
@@ -40,6 +41,27 @@ const init = async () => {
     clue: { deck: clues, db: clueDb },
   });
 
+  const gameState: GameState = {
+    market: [],
+    turn: {
+      round: 1,
+      phase: "Action",
+      leadInvestigatorId: "",
+      currentInvestigatorId: "",
+    },
+    decks: {
+      asset: allDecks.getManager("asset").getState(),
+      spell: allDecks.getManager("spell").getState(),
+      condition: allDecks.getManager("condition").getState(),
+      gate: allDecks.getManager("gate").getState(),
+      clue: allDecks.getManager("clue").getState(),
+    },
+    clues: [],
+    openGates: [],
+    players,
+    log: [],
+  };
+
   const logService = new LogService();
   const marketState: MarketState = {
     getMarketIds: () => gameState.market,
@@ -48,12 +70,22 @@ const init = async () => {
     },
     getAssetById: (id) => assetDb.get(id),
   };
+  const clueState: ClueState = {
+    getClueIds: () => gameState.clues,
+    setClueIds: (ids) => {
+      gameState.clues = ids;
+    },
+    getClueById: (id) => clueDb.get(id),
+  };
   const assetDeck = allDecks.getManager("asset");
+  const clueDeck = allDecks.getManager("clue");
   const marketService = new MarketService(assetDeck, marketState, logService);
+  const clueService = new ClueService(clueDeck, clueState, logService);
 
-  const services = {
+  const services: Services = {
     logService,
     marketService,
+    clueService,
   };
 
   const game = new GameService(allDecks, players, services);

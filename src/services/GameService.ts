@@ -22,7 +22,6 @@ export class GameService {
   };
   private players: PlayerState[] = [];
   private openGates: string[] = [];
-  private clues: string[] = [];
   private services: Services;
 
   constructor(
@@ -41,25 +40,15 @@ export class GameService {
   }
 
   drawClue(): string | null {
-    const clue = this.decks.draw("clue");
-    if (!clue) return null;
-    this.clues.push(clue.id);
-    this.log.push(`Выложена улика: ${clue.name}`);
-    return clue.id;
+    return this.services.clueService.draw();
   }
 
   discardClue(clueId: string): boolean {
-    const index = this.clues.findIndex((clue) => clue === clueId);
-    if (index === -1) return false;
-    this.clues.splice(index, 1);
-    this.log.push(`Улика ${clueId} сброшена`);
-    return true;
+    return this.services.clueService.discard(clueId);
   }
 
   getCluesState(): Clue[] {
-    return this.clues
-      .map((clueId) => this.decks.getCardById("clue", clueId))
-      .filter(Boolean) as Clue[];
+    return this.services.clueService.getAll();
   }
 
   drawGate(): Gate | null {
@@ -122,7 +111,7 @@ export class GameService {
       players: this.players,
       openGates: [...this.openGates],
       decks: this.decks.getState(),
-      clues: [...this.clues],
+      clues: this.services.clueService.getAll().map((c) => c.id),
     };
   }
 
@@ -305,9 +294,9 @@ export class GameService {
     this.log = state.log;
     this.players = state.players;
     this.openGates = state.openGates;
-    this.clues = state.clues;
 
     this.services.marketService.restore(state.market);
+    this.services.clueService.restore(state.clues);
 
     this.services.logService.clear();
     state.log.forEach((msg) => this.services.logService.add(msg));

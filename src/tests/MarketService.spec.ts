@@ -1,8 +1,9 @@
-import { MarketService, MarketState } from "services/MarketService";
+import { MarketService } from "services/MarketService";
 import { Asset } from "types/Asset";
 import { ILogService } from "types/ILogService";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getFakeAssets } from "./helpers/getFakeAsset";
+import { MarketState } from "types/MarketState";
 
 describe("MarketService (unit)", () => {
   let state: MarketState;
