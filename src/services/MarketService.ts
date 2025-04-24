@@ -61,4 +61,18 @@ export class MarketService implements IMarketService {
       this.state.getAssetById(id)
     );
   }
+
+  restore(ids: string[]): void {
+    this.state.setMarketIds(ids);
+    const assets = resolveCards(ids, (id) => this.state.getAssetById(id));
+
+    if (assets.length > 0) {
+      this.logger.add(
+        `Восстановлен маркет: ${assets.map((a) => a.name).join(", ")}`
+      );
+    } else {
+      this.logger.add("Маркет восстановлен, но карты не найдены");
+    }
+    this.replenish();
+  }
 }

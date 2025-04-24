@@ -5,4 +5,5 @@ export interface IMarketService {
   buy(cardId: string): Asset | null;
   discard(asset: Asset): void;
   getAll(): Asset[];
+  restore(ids: string[]): void;
 }

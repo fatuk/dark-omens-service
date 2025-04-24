@@ -302,11 +302,15 @@ export class GameService {
   ) {
     this.turn = state.turn;
     this.decks.restoreFromState(state.decks, dbs);
-    this.market = state.market.map((id) => dbs.asset.get(id)!);
     this.log = state.log;
     this.players = state.players;
     this.openGates = state.openGates;
     this.clues = state.clues;
+
+    this.services.marketService.restore(state.market);
+
+    this.services.logService.clear();
+    state.log.forEach((msg) => this.services.logService.add(msg));
   }
 
   apply(action: GameAction) {

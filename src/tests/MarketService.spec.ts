@@ -98,4 +98,19 @@ describe("MarketService (unit)", () => {
     const all = svc.getAll();
     expect(all).toEqual([assets[0], assets[2]]);
   });
+
+  test("restore восстанавливает заранее заданный список ID", () => {
+    const assets = getFakeAssets(3);
+    state.getAssetById = (id) => assets.find((a) => a.id === id);
+
+    const restoreIds = [assets[2].id, assets[0].id];
+    svc.restore(restoreIds);
+
+    expect(state.getMarketIds()).toEqual(restoreIds);
+
+    const restored = svc.getAll();
+    console.log(restored);
+
+    expect(restored).toEqual([assets[2], assets[0]]);
+  });
 });
