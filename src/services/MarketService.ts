@@ -3,7 +3,7 @@ import { resolveCards } from "helpers/resolveCards";
 import { DeckManager } from "./DeckManager";
 import { ILogService } from "types/ILogService";
 import { IMarketService } from "types/IMarketService";
-import { MarketState } from "types/MarketState";
+import { MarketStateService } from "types/MarketStateService";
 
 const DEFAULT_MAX_MARKET_CARDS = 4;
 
@@ -12,7 +12,7 @@ export class MarketService implements IMarketService {
 
   constructor(
     private readonly deck: DeckManager<Asset>,
-    private readonly state: MarketState,
+    private readonly state: MarketStateService,
     private readonly logger: ILogService,
     maxSize = DEFAULT_MAX_MARKET_CARDS
   ) {

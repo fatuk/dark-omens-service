@@ -1,12 +1,13 @@
 import { Clue } from "types/Clue";
 import { DeckManager } from "services/DeckManager";
 import { ILogService } from "types/ILogService";
-import { ClueState } from "types/ClueState";
+import { ClueStateService } from "types/ClueStateService";
+import { IClueService } from "types/IClueService";
 
-export class ClueService {
+export class ClueService implements IClueService {
   constructor(
     private readonly deck: DeckManager<Clue>,
-    private readonly state: ClueState,
+    private readonly state: ClueStateService,
     private readonly logger: ILogService
   ) {}
 

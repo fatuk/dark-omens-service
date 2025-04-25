@@ -1,6 +1,6 @@
 import { Asset } from "./Asset";
 
-export interface MarketState {
+export interface MarketStateService {
   getMarketIds(): string[];
   setMarketIds(ids: string[]): void;
   getAssetById(id: string): Asset | undefined;

@@ -4,25 +4,31 @@ import { AllDecksManager } from "services/AllDeckManager";
 import { ConditionRepository } from "repositories/ConditionRepository";
 import { GameService } from "services/GameService";
 
-import players from "data/players.json";
 import { GateRepository } from "repositories/GateRepository";
 import { ClueRepository } from "repositories/ClueRepository";
 import { LogService } from "services/LogService";
 import { MarketService } from "services/MarketService";
-import { MarketState } from "types/MarketState";
-import { ClueState } from "types/ClueState";
+import { MarketStateService } from "types/MarketStateService";
+import { ClueStateService } from "types/ClueStateService";
 import { GameState } from "types/GameState";
 import { ClueService } from "services/ClueService";
 import { Services } from "types/Services";
+import { PlayerService } from "services/PlayerService";
+import { PlayerStateService } from "types/PlayerStateService";
+import { PlayerState } from "types/PlayerState";
+import { PlayerRepository } from "repositories/PlayerRepository";
 
 const init = async () => {
-  const [assets, spells, conditions, gates, clues] = await Promise.all([
-    new AssetRepository().getAll(),
-    new SpellRepository().getAll(),
-    new ConditionRepository().getAll(),
-    new GateRepository().getAll(),
-    new ClueRepository().getAll(),
-  ]);
+  const [assets, spells, conditions, gates, clues, players] = await Promise.all(
+    [
+      new AssetRepository().getAll(),
+      new SpellRepository().getAll(),
+      new ConditionRepository().getAll(),
+      new GateRepository().getAll(),
+      new ClueRepository().getAll(),
+      new PlayerRepository().getAll(),
+    ]
+  );
 
   const assetDb = new Map(assets.map((c) => [c.id, c]));
   const spellDb = new Map(spells.map((c) => [c.id, c]));
@@ -63,29 +69,45 @@ const init = async () => {
   };
 
   const logService = new LogService();
-  const marketState: MarketState = {
+  const marketState: MarketStateService = {
     getMarketIds: () => gameState.market,
-    setMarketIds: (ids) => {
+    setMarketIds: (ids: string[]) => {
       gameState.market = ids;
     },
-    getAssetById: (id) => assetDb.get(id),
+    getAssetById: (id: string) => assetDb.get(id),
   };
-  const clueState: ClueState = {
+  const clueState: ClueStateService = {
     getClueIds: () => gameState.clues,
-    setClueIds: (ids) => {
+    setClueIds: (ids: string[]) => {
       gameState.clues = ids;
     },
-    getClueById: (id) => clueDb.get(id),
+    getClueById: (id: string) => clueDb.get(id),
+  };
+  const playerState: PlayerStateService = {
+    getAll: () => gameState.players,
+    getById: (id: string) => gameState.players.find((p) => p.id === id),
+    update: (playerState: PlayerState): void => {
+      const index = gameState.players.findIndex((p) => p.id === playerState.id);
+
+      if (index !== -1) {
+        gameState.players[index] = playerState;
+      }
+    },
+    clear: (): void => {
+      gameState.players = [];
+    },
   };
   const assetDeck = allDecks.getManager("asset");
   const clueDeck = allDecks.getManager("clue");
   const marketService = new MarketService(assetDeck, marketState, logService);
   const clueService = new ClueService(clueDeck, clueState, logService);
+  const playerService = new PlayerService(playerState, logService);
 
   const services: Services = {
     logService,
     marketService,
     clueService,
+    playerService,
   };
 
   const game = new GameService(allDecks, players, services);

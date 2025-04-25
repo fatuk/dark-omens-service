@@ -8,8 +8,7 @@ import { GameState } from "types/GameState";
 import { Gate } from "types/Gate";
 import { Clue } from "types/Clue";
 import { Services } from "types/Services";
-
-const MAX_ACTIONS_PER_PLAYER = 2;
+import { resolveCards } from "helpers/resolveCards";
 
 export class GameService {
   private decks: AllDecksManager;
@@ -29,14 +28,18 @@ export class GameService {
     players: PlayerState[],
     services: Services
   ) {
-    this.decks = decks;
-    this.players = players
-      .sort((a, b) => a.turnOrder - b.turnOrder)
-      .map((p) => ({ ...p, actionsTaken: [] }));
-    this.turn.leadInvestigatorId = this.players[0]?.id ?? "";
-    this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
     this.services = services;
+    this.decks = decks;
+    const sorted = this.services.playerService
+      .getAll()
+      .sort((a, b) => a.turnOrder - b.turnOrder);
+    this.turn.leadInvestigatorId = sorted[0]?.id ?? "";
+    this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
+    this.services.playerService.initialize(players);
     this.services.marketService.replenish();
+
+    services.playerService.resetActions();
+    services.playerService.initialize(players);
   }
 
   drawClue(): string | null {
@@ -73,34 +76,20 @@ export class GameService {
       .filter(Boolean) as Gate[];
   }
 
-  getPlayerState(
-    playerId: string
-  ): (PlayerState & { assets: Asset[]; conditions: Condition[] }) | null {
-    const player = this.players.find((p) => p.id === playerId);
-    if (!player) return null;
-    const assets = player.assetIds
-      .map((id) => this.decks.getCardById("asset", id))
-      .filter(Boolean) as Asset[];
-    const conditions = player.conditionIds
-      .map((id) => this.decks.getCardById("condition", id))
-      .filter(Boolean) as Condition[];
-    return { ...player, assets, conditions };
-  }
-
   drawCard<T extends CardType>(type: T): CardMap[T] | null {
     const card = this.decks.draw(type);
-    if (card) this.log.push(`Вытянута карта: ${card.name}`);
+    if (card) this.services.logService.add(`Вытянута карта: ${card.name}`);
     return card;
   }
 
   discardCard<T extends CardType>(type: T, card: CardMap[T]): void {
     this.decks.discard(type, card);
-    this.log.push(`Сброшена карта: ${card.name}`);
+    this.services.logService.add(`Сброшена карта: ${card.name}`);
   }
 
   shuffleDeck<T extends CardType>(type: T): void {
     this.decks.shuffle(type);
-    this.log.push(`Перемешана колода: ${type}`);
+    this.services.logService.add(`Перемешана колода: ${type}`);
   }
 
   getState(): GameState {
@@ -108,7 +97,7 @@ export class GameService {
       turn: { ...this.turn },
       market: this.services.marketService.getAll().map((c) => c.id),
       log: this.services.logService.get(),
-      players: this.players,
+      players: this.services.playerService.getAll(),
       openGates: [...this.openGates],
       decks: this.decks.getState(),
       clues: this.services.clueService.getAll().map((c) => c.id),
@@ -127,40 +116,59 @@ export class GameService {
     return this.services.marketService.buy(cardId);
   }
 
-  canTakeAction(playerId: string, actionType: string): boolean {
-    const player = this.players.find((p) => p.id === playerId);
-    if (!player) return false;
-    return (
-      player.actionsTaken.length < MAX_ACTIONS_PER_PLAYER &&
-      !player.actionsTaken.includes(actionType)
+  getPlayerState(
+    playerId: string
+  ): (PlayerState & { assets: Asset[]; conditions: Condition[] }) | null {
+    const player = this.services.playerService.getById(playerId);
+    if (!player) return null;
+
+    const assets = resolveCards(player.assetIds, (id) =>
+      this.decks.getCardById("asset", id)
     );
+
+    const conditions = resolveCards(player.conditionIds, (id) =>
+      this.decks.getCardById("condition", id)
+    );
+
+    if (!assets || !conditions) return null;
+
+    return { ...player, assets, conditions };
   }
 
-  recordAction(playerId: string, actionType: string): void {
-    const player = this.players.find((p) => p.id === playerId);
-    if (!player) return;
-    if (!player.actionsTaken.includes(actionType)) {
-      player.actionsTaken.push(actionType);
-      this.log.push(`Игрок ${playerId} выполнил действие: ${actionType}`);
-    }
+  canTakeAction(playerId: string, action: string): boolean {
+    return this.services.playerService.canTakeAction(playerId, action);
+  }
+
+  recordAction(playerId: string, action: string): void {
+    this.services.playerService.recordAction(playerId, action);
   }
 
   resetActions(): void {
-    this.players.forEach((p) => (p.actionsTaken = []));
-    this.log.push("Все действия сброшены");
+    this.services.playerService.resetActions();
   }
 
   resolveEncounter(playerId: string): string {
-    const player = this.players.find((p) => p.id === playerId);
-    if (!player) return "Игрок не найден";
+    return this.services.playerService.resolveEncounter(playerId);
+  }
 
-    const locationId = player.locationId;
-    const type = this.getEncounterType(locationId);
+  movePlayer(playerId: string, location: string): boolean {
+    return this.services.playerService.move(playerId, location);
+  }
 
-    this.log.push(
-      `Игрок ${playerId} проходит ${type} встречу в локации ${locationId}`
-    );
-    return type;
+  healHealth(playerId: string, amount: number): boolean {
+    return this.services.playerService.healHealth(playerId, amount);
+  }
+
+  loseHealth(playerId: string, amount: number): boolean {
+    return this.services.playerService.loseHealth(playerId, amount);
+  }
+
+  healSanity(playerId: string, amount: number): boolean {
+    return this.services.playerService.healSanity(playerId, amount);
+  }
+
+  loseSanity(playerId: string, amount: number): boolean {
+    return this.services.playerService.loseSanity(playerId, amount);
   }
 
   getEncounterType(locationId: string): string {
@@ -214,75 +222,6 @@ export class GameService {
     this.log.push(`Новый лидер: ${next.id}`);
   }
 
-  movePlayer(playerId: string, locationId: string): boolean {
-    if (!this.canTakeAction(playerId, "move")) return false;
-
-    const player = this.players.find((p) => p.id === playerId);
-    if (!player) return false;
-
-    player.locationId = locationId;
-    this.recordAction(playerId, "move");
-    this.log.push(`Игрок ${playerId} переместился в локацию ${locationId}`);
-    return true;
-  }
-
-  healHealth(playerId: string, amount: number): boolean {
-    const player = this.players.find((p) => p.id === playerId);
-
-    if (!player || amount <= 0 || player.isDefeated) return false;
-
-    const before = player.health;
-    player.health = Math.min(player.health + amount, player.maxHealth);
-
-    this.log.push(
-      `Игрок ${playerId} восстановил здоровье: ${before} → ${player.health}`
-    );
-    return true;
-  }
-
-  loseHealth(playerId: string, amount: number): boolean {
-    const player = this.players.find((p) => p.id === playerId);
-
-    if (!player || amount <= 0 || player.isDefeated) return false;
-
-    const before = player.health;
-    player.health = Math.max(player.health - amount, 0);
-    this.log.push(
-      `Игрок ${playerId} потерял здоровье: ${before} → ${player.health}`
-    );
-    if (player.health === 0) {
-      player.isDefeated = true;
-      this.log.push(`Игрок ${playerId} пал от ран.`);
-    }
-    return true;
-  }
-
-  healSanity(playerId: string, amount: number): boolean {
-    const player = this.players.find((p) => p.id === playerId);
-    if (!player || amount <= 0 || player.isDefeated) return false;
-    const before = player.sanity;
-    player.sanity = Math.min(player.sanity + amount, player.maxSanity);
-    this.log.push(
-      `Игрок ${playerId} восстановил рассудок: ${before} → ${player.sanity}`
-    );
-    return true;
-  }
-
-  loseSanity(playerId: string, amount: number): boolean {
-    const player = this.players.find((p) => p.id === playerId);
-    if (!player || amount <= 0 || player.isDefeated) return false;
-    const before = player.sanity;
-    player.sanity = Math.max(player.sanity - amount, 0);
-    this.log.push(
-      `Игрок ${playerId} потерял рассудок: ${before} → ${player.sanity}`
-    );
-    if (player.sanity === 0) {
-      player.isDefeated = true;
-      this.log.push(`Игрок ${playerId} пал от ужаса.`);
-    }
-    return true;
-  }
-
   restoreFromState(
     state: GameState,
     dbs: {
@@ -292,11 +231,11 @@ export class GameService {
     this.turn = state.turn;
     this.decks.restoreFromState(state.decks, dbs);
     this.log = state.log;
-    this.players = state.players;
     this.openGates = state.openGates;
 
     this.services.marketService.restore(state.market);
     this.services.clueService.restore(state.clues);
+    this.services.playerService.restore(state.players);
 
     this.services.logService.clear();
     state.log.forEach((msg) => this.services.logService.add(msg));

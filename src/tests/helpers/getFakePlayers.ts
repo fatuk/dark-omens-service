@@ -2,12 +2,12 @@ import { faker } from "@faker-js/faker";
 import { PlayerState } from "types/PlayerState";
 
 export const getFakePlayers = (count: number): PlayerState[] => {
-  return Array.from({ length: count }, () => ({
+  return Array.from({ length: count }, (_, i) => ({
     id: `player-${faker.number.int({ min: 1, max: 1000 })}`,
     userId: `user-${faker.number.int({ min: 1, max: 1000 })}`,
     investigatorId: `investigator-${faker.number.int({ min: 1, max: 1000 })}`,
     isOnline: faker.datatype.boolean(),
-    turnOrder: faker.number.int({ min: 1, max: 10 }),
+    turnOrder: i,
     health: faker.number.int({ min: 1, max: 10 }),
     maxHealth: faker.number.int({ min: 1, max: 10 }),
     sanity: faker.number.int({ min: 1, max: 10 }),

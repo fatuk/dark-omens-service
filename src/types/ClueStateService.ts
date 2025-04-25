@@ -1,6 +1,6 @@
 import { Clue } from "./Clue";
 
-export interface ClueState {
+export interface ClueStateService {
   getClueIds(): string[];
   setClueIds(ids: string[]): void;
   getClueById(id: string): Clue | undefined;

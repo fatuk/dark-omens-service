@@ -3,10 +3,10 @@ import { ClueService } from "services/ClueService";
 import type { ILogService } from "types/ILogService";
 import type { Clue } from "types/Clue";
 import { getFakeClues } from "./helpers/getFakeClues";
-import { ClueState } from "types/ClueState";
+import { ClueStateService } from "types/ClueStateService";
 
 describe("ClueService (unit)", () => {
-  let state: ClueState;
+  let state: ClueStateService;
   let deck: { draw: () => Clue | null; discard: (c: Clue) => void };
   let logger: ILogService;
   let svc: ClueService;

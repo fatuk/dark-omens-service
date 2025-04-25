@@ -3,10 +3,10 @@ import { Asset } from "types/Asset";
 import { ILogService } from "types/ILogService";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getFakeAssets } from "./helpers/getFakeAsset";
-import { MarketState } from "types/MarketState";
+import { MarketStateService } from "types/MarketStateService";
 
 describe("MarketService (unit)", () => {
-  let state: MarketState;
+  let state: MarketStateService;
   let deck: { draw: () => Asset | null; discard: (a: Asset) => void };
   let logService: ILogService;
   let svc: MarketService;
@@ -110,7 +110,6 @@ describe("MarketService (unit)", () => {
     expect(state.getMarketIds()).toEqual(restoreIds);
 
     const restored = svc.getAll();
-    console.log(restored);
 
     expect(restored).toEqual([assets[2], assets[0]]);
   });
