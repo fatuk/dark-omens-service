@@ -1,6 +1,6 @@
-import { Asset } from "./Asset";
+import { Asset } from "types/Asset";
 
-export interface IMarketService {
+export interface IMarket {
   replenish(): void;
   buy(cardId: string): Asset | null;
   discard(asset: Asset): void;

@@ -1,8 +1,9 @@
 import { Card } from "types/Card";
 import { DeckManagerState } from "types/DeckManagerState";
 import { DeckState } from "types/DeckState";
+import { IDeck } from "./IDeck";
 
-export class DeckManager<T extends Card> {
+export class Deck<T extends Card> implements IDeck<T> {
   private deck: DeckState<T>;
   private cardDb: Map<string, T>;
 

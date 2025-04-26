@@ -1,6 +1,6 @@
-import { PlayerState } from "./PlayerState";
+import { PlayerState } from "types/PlayerState";
 
-export interface IPlayerService {
+export interface IPlayer {
   canTakeAction(playerId: string, actionType: string): boolean;
   recordAction(playerId: string, actionType: string): void;
   resetActions(): void;

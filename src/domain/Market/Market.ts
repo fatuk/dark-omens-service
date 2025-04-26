@@ -1,19 +1,19 @@
 import { Asset } from "types/Asset";
 import { resolveCards } from "helpers/resolveCards";
-import { DeckManager } from "./DeckManager";
-import { ILogService } from "types/ILogService";
-import { IMarketService } from "types/IMarketService";
+import { IMarket } from "./IMarket";
 import { MarketStateService } from "types/MarketStateService";
+import type { IDeck } from "infrastructure/Deck";
+import { ILog } from "infrastructure/Log";
 
 const DEFAULT_MAX_MARKET_CARDS = 4;
 
-export class MarketService implements IMarketService {
+export class Market implements IMarket {
   private readonly maxSize: number;
 
   constructor(
-    private readonly deck: DeckManager<Asset>,
+    private readonly deck: IDeck<Asset>,
     private readonly state: MarketStateService,
-    private readonly logger: ILogService,
+    private readonly logger: ILog,
     maxSize = DEFAULT_MAX_MARKET_CARDS
   ) {
     this.maxSize = maxSize;

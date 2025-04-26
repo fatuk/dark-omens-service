@@ -1,15 +1,16 @@
 import { describe, beforeEach, test, expect, vi } from "vitest";
-import { ClueService } from "services/ClueService";
-import type { ILogService } from "types/ILogService";
-import type { Clue } from "types/Clue";
-import { getFakeClues } from "./helpers/getFakeClues";
+import type { Clue as ClueCard } from "types/Clue";
 import { ClueStateService } from "types/ClueStateService";
+import { ILog } from "infrastructure/Log";
+import { getFakeClues } from "tests/helpers/getFakeClues";
+import { IClue } from "./IClue";
+import { Clue } from "./Clue";
 
-describe("ClueService (unit)", () => {
+describe("Domain Clue (unit)", () => {
   let state: ClueStateService;
-  let deck: { draw: () => Clue | null; discard: (c: Clue) => void };
-  let logger: ILogService;
-  let svc: ClueService;
+  let deck: { draw: () => ClueCard | null; discard: (c: ClueCard) => void };
+  let logger: ILog;
+  let svc: IClue;
 
   beforeEach(() => {
     const allClues = getFakeClues(5);
@@ -34,7 +35,7 @@ describe("ClueService (unit)", () => {
       clear: vi.fn(),
     };
 
-    svc = new ClueService(deck as any, state, logger);
+    svc = new Clue(deck as any, state, logger);
   });
 
   test("draw возвращает ID новой улики и логирует", () => {

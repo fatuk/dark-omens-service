@@ -30,7 +30,10 @@
       "config/*": ["./src/config/*"],
       "middlewares/*": ["./src/middlewares/*"],
       "types/*": ["./src/types/*"],
-      "services/*": ["./src/services/*"],
+      "application/*": ["./src/application/*"],
+      "domain/*": ["./src/domain/*"],
+      "infrastructure/*": ["./src/infrastructure/*"],
+      "tests/*": ["./src/tests/*"],
       "repositories/*": ["./src/repositories/*"]
     }
   },

@@ -1,4 +1,3 @@
-import { AllDecksManager } from "./AllDeckManager";
 import { Asset } from "types/Asset";
 import { Condition } from "types/Condition";
 import { CardMap, CardType } from "types/Card";
@@ -9,9 +8,10 @@ import { Gate } from "types/Gate";
 import { Clue } from "types/Clue";
 import { Services } from "types/Services";
 import { resolveCards } from "helpers/resolveCards";
+import { IAllDecks } from "infrastructure/AllDecks";
 
-export class GameService {
-  private decks: AllDecksManager;
+export class Game {
+  private decks: IAllDecks;
   private log: string[] = [];
   private turn: GameState["turn"] = {
     round: 1,
@@ -23,35 +23,29 @@ export class GameService {
   private openGates: string[] = [];
   private services: Services;
 
-  constructor(
-    decks: AllDecksManager,
-    players: PlayerState[],
-    services: Services
-  ) {
+  constructor(decks: IAllDecks, players: PlayerState[], services: Services) {
     this.services = services;
     this.decks = decks;
-    const sorted = this.services.playerService
+    const sorted = this.services.player
       .getAll()
       .sort((a, b) => a.turnOrder - b.turnOrder);
     this.turn.leadInvestigatorId = sorted[0]?.id ?? "";
     this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
-    this.services.playerService.initialize(players);
-    this.services.marketService.replenish();
-
-    services.playerService.resetActions();
-    services.playerService.initialize(players);
+    this.services.player.resetActions();
+    this.services.player.initialize(players);
+    this.services.market.replenish();
   }
 
   drawClue(): string | null {
-    return this.services.clueService.draw();
+    return this.services.clue.draw();
   }
 
   discardClue(clueId: string): boolean {
-    return this.services.clueService.discard(clueId);
+    return this.services.clue.discard(clueId);
   }
 
   getCluesState(): Clue[] {
-    return this.services.clueService.getAll();
+    return this.services.clue.getAll();
   }
 
   drawGate(): Gate | null {
@@ -78,48 +72,48 @@ export class GameService {
 
   drawCard<T extends CardType>(type: T): CardMap[T] | null {
     const card = this.decks.draw(type);
-    if (card) this.services.logService.add(`Вытянута карта: ${card.name}`);
+    if (card) this.services.log.add(`Вытянута карта: ${card.name}`);
     return card;
   }
 
   discardCard<T extends CardType>(type: T, card: CardMap[T]): void {
     this.decks.discard(type, card);
-    this.services.logService.add(`Сброшена карта: ${card.name}`);
+    this.services.log.add(`Сброшена карта: ${card.name}`);
   }
 
   shuffleDeck<T extends CardType>(type: T): void {
     this.decks.shuffle(type);
-    this.services.logService.add(`Перемешана колода: ${type}`);
+    this.services.log.add(`Перемешана колода: ${type}`);
   }
 
   getState(): GameState {
     return {
       turn: { ...this.turn },
-      market: this.services.marketService.getAll().map((c) => c.id),
-      log: this.services.logService.get(),
-      players: this.services.playerService.getAll(),
+      market: this.services.market.getAll().map((c) => c.id),
+      log: this.services.log.get(),
+      players: this.services.player.getAll(),
       openGates: [...this.openGates],
       decks: this.decks.getState(),
-      clues: this.services.clueService.getAll().map((c) => c.id),
+      clues: this.services.clue.getAll().map((c) => c.id),
     };
   }
 
   getMarketState(): Asset[] {
-    return this.services.marketService.getAll();
+    return this.services.market.getAll();
   }
 
   replenishMarket(): void {
-    this.services.marketService.replenish();
+    this.services.market.replenish();
   }
 
   buyFromMarket(cardId: string): Asset | null {
-    return this.services.marketService.buy(cardId);
+    return this.services.market.buy(cardId);
   }
 
   getPlayerState(
     playerId: string
   ): (PlayerState & { assets: Asset[]; conditions: Condition[] }) | null {
-    const player = this.services.playerService.getById(playerId);
+    const player = this.services.player.getById(playerId);
     if (!player) return null;
 
     const assets = resolveCards(player.assetIds, (id) =>
@@ -136,39 +130,39 @@ export class GameService {
   }
 
   canTakeAction(playerId: string, action: string): boolean {
-    return this.services.playerService.canTakeAction(playerId, action);
+    return this.services.player.canTakeAction(playerId, action);
   }
 
   recordAction(playerId: string, action: string): void {
-    this.services.playerService.recordAction(playerId, action);
+    this.services.player.recordAction(playerId, action);
   }
 
   resetActions(): void {
-    this.services.playerService.resetActions();
+    this.services.player.resetActions();
   }
 
   resolveEncounter(playerId: string): string {
-    return this.services.playerService.resolveEncounter(playerId);
+    return this.services.player.resolveEncounter(playerId);
   }
 
   movePlayer(playerId: string, location: string): boolean {
-    return this.services.playerService.move(playerId, location);
+    return this.services.player.move(playerId, location);
   }
 
   healHealth(playerId: string, amount: number): boolean {
-    return this.services.playerService.healHealth(playerId, amount);
+    return this.services.player.healHealth(playerId, amount);
   }
 
   loseHealth(playerId: string, amount: number): boolean {
-    return this.services.playerService.loseHealth(playerId, amount);
+    return this.services.player.loseHealth(playerId, amount);
   }
 
   healSanity(playerId: string, amount: number): boolean {
-    return this.services.playerService.healSanity(playerId, amount);
+    return this.services.player.healSanity(playerId, amount);
   }
 
   loseSanity(playerId: string, amount: number): boolean {
-    return this.services.playerService.loseSanity(playerId, amount);
+    return this.services.player.loseSanity(playerId, amount);
   }
 
   getEncounterType(locationId: string): string {
@@ -233,12 +227,12 @@ export class GameService {
     this.log = state.log;
     this.openGates = state.openGates;
 
-    this.services.marketService.restore(state.market);
-    this.services.clueService.restore(state.clues);
-    this.services.playerService.restore(state.players);
+    this.services.market.restore(state.market);
+    this.services.clue.restore(state.clues);
+    this.services.player.restore(state.players);
 
-    this.services.logService.clear();
-    state.log.forEach((msg) => this.services.logService.add(msg));
+    this.services.log.clear();
+    state.log.forEach((msg) => this.services.log.add(msg));
   }
 
   apply(action: GameAction) {
@@ -253,6 +247,6 @@ export class GameService {
   }
 
   getLog(): string[] {
-    return this.services.logService.get();
+    return this.services.log.get();
   }
 }

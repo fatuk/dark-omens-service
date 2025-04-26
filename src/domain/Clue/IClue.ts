@@ -1,6 +1,6 @@
-import { Clue } from "./Clue";
+import { Clue } from "types/Clue";
 
-export interface IClueService {
+export interface IClue {
   draw: () => string | null;
   getAll: () => Clue[];
   discard: (id: string) => boolean;

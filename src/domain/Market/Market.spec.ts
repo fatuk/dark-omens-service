@@ -1,15 +1,16 @@
-import { MarketService } from "services/MarketService";
 import { Asset } from "types/Asset";
-import { ILogService } from "types/ILogService";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getFakeAssets } from "./helpers/getFakeAsset";
 import { MarketStateService } from "types/MarketStateService";
+import { ILog } from "infrastructure/Log";
+import { IMarket } from "./IMarket";
+import { getFakeAssets } from "tests/helpers/getFakeAsset";
+import { Market } from "./Market";
 
-describe("MarketService (unit)", () => {
+describe("Domain Market (unit)", () => {
   let state: MarketStateService;
   let deck: { draw: () => Asset | null; discard: (a: Asset) => void };
-  let logService: ILogService;
-  let svc: MarketService;
+  let logService: ILog;
+  let svc: IMarket;
 
   beforeEach(() => {
     const allAssets = getFakeAssets(5);
@@ -34,7 +35,7 @@ describe("MarketService (unit)", () => {
       clear: vi.fn(),
     };
 
-    svc = new MarketService(deck as any, state, logService, 3);
+    svc = new Market(deck as any, state, logService, 3);
   });
 
   test("replenish наполняет маркет до maxSize и логирует каждую карту", () => {

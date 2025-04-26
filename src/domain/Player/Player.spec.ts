@@ -1,15 +1,15 @@
-// tests/PlayerService.spec.ts
 import { describe, beforeEach, test, expect, vi } from "vitest";
-import { PlayerService } from "services/PlayerService";
 import type { PlayerState } from "types/PlayerState";
-import type { ILogService } from "types/ILogService";
 import type { PlayerStateService } from "types/PlayerStateService";
-import { getFakePlayers } from "./helpers/getFakePlayers";
+import { ILog } from "infrastructure/Log";
+import { IPlayer } from "./IPlayer";
+import { Player } from "./Player";
+import { getFakePlayers } from "tests/helpers/getFakePlayers";
 
-describe("PlayerService (unit)", () => {
+describe("Domain Player (unit)", () => {
   let stateSvc: PlayerStateService;
-  let log: ILogService;
-  let svc: PlayerService;
+  let log: ILog;
+  let svc: IPlayer;
   let store: PlayerState[];
 
   beforeEach(() => {
@@ -34,7 +34,7 @@ describe("PlayerService (unit)", () => {
       clear: vi.fn(),
     };
 
-    svc = new PlayerService(stateSvc, log);
+    svc = new Player(stateSvc, log);
   });
 
   test("initialize сортирует по turnOrder и сбрасывает actionsTaken", () => {

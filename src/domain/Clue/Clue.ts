@@ -1,14 +1,14 @@
-import { Clue } from "types/Clue";
-import { DeckManager } from "services/DeckManager";
-import { ILogService } from "types/ILogService";
+import { Clue as ClueCard } from "types/Clue";
 import { ClueStateService } from "types/ClueStateService";
-import { IClueService } from "types/IClueService";
+import { IClue } from "./IClue";
+import { IDeck } from "infrastructure/Deck";
+import { ILog } from "infrastructure/Log";
 
-export class ClueService implements IClueService {
+export class Clue implements IClue {
   constructor(
-    private readonly deck: DeckManager<Clue>,
+    private readonly deck: IDeck<ClueCard>,
     private readonly state: ClueStateService,
-    private readonly logger: ILogService
+    private readonly logger: ILog
   ) {}
 
   draw(): string | null {
@@ -30,11 +30,11 @@ export class ClueService implements IClueService {
     return true;
   }
 
-  getAll(): Clue[] {
+  getAll(): ClueCard[] {
     return this.state
       .getClueIds()
       .map((id) => this.state.getClueById(id))
-      .filter((c): c is Clue => Boolean(c));
+      .filter((c): c is ClueCard => Boolean(c));
   }
 
   restore(ids: string[]): void {

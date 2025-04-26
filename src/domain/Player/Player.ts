@@ -1,14 +1,14 @@
 import { PlayerState } from "types/PlayerState";
-import { ILogService } from "types/ILogService";
-import { IPlayerService } from "types/IPlayerService";
 import { PlayerStateService } from "types/PlayerStateService";
+import { IPlayer } from "./IPlayer";
+import { ILog } from "infrastructure/Log";
 
 const DEFAULT_MAX_ACTIONS = 2;
 
-export class PlayerService implements IPlayerService {
+export class Player implements IPlayer {
   constructor(
     private readonly stateSvc: PlayerStateService,
-    private readonly logger: ILogService,
+    private readonly logger: ILog,
     private readonly maxActions = DEFAULT_MAX_ACTIONS
   ) {}
 

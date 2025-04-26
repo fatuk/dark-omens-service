@@ -1,6 +1,6 @@
-import { ILogService } from "types/ILogService";
+import { ILog } from "./ILog";
 
-export class LogService implements ILogService {
+export class Log implements ILog {
   private log: string[] = [];
 
   add(message: string): void {

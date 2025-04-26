@@ -1,8 +1,10 @@
-import { DeckManager } from "./DeckManager";
+import { Deck } from "infrastructure/Deck";
 import { CardMap } from "types/Card";
 import { DeckManagerState } from "types/DeckManagerState";
+import { IAllDecks } from "./IAllDecks";
+import { IDeck } from "infrastructure/Deck/IDeck";
 
-type Decks = { [K in keyof CardMap]: DeckManager<CardMap[K]> };
+type Decks = { [K in keyof CardMap]: IDeck<CardMap[K]> };
 type InitParams = {
   [K in keyof CardMap]: {
     deck: CardMap[K][];
@@ -10,18 +12,18 @@ type InitParams = {
   };
 };
 
-export class AllDecksManager {
+export class AllDecks implements IAllDecks {
   private decks: Decks;
 
   constructor(params: InitParams) {
     const entries = (Object.keys(params) as Array<keyof CardMap>).map((k) => {
       const { deck, db } = params[k];
-      const mgr = new DeckManager<CardMap[typeof k]>(db);
+      const mgr = new Deck<CardMap[typeof k]>(db);
       mgr.initialize(deck);
       return [k, mgr] as const;
     });
 
-    this.decks = Object.fromEntries(entries) as Decks;
+    this.decks = Object.fromEntries(entries) as unknown as Decks;
   }
 
   draw<K extends keyof CardMap>(type: K): CardMap[K] | null {
@@ -54,14 +56,14 @@ export class AllDecksManager {
     dbs: { [K in keyof CardMap]: Map<string, CardMap[K]> }
   ) {
     const entries = (Object.keys(dbs) as Array<keyof CardMap>).map((k) => {
-      const mgr = new DeckManager<CardMap[typeof k]>(dbs[k]);
+      const mgr = new Deck<CardMap[typeof k]>(dbs[k]);
       mgr.restoreFromState(state[k]);
       return [k, mgr] as const;
     });
-    this.decks = Object.fromEntries(entries) as Decks;
+    this.decks = Object.fromEntries(entries) as unknown as Decks;
   }
 
-  getManager<K extends keyof CardMap>(type: K): DeckManager<CardMap[K]> {
+  getManager<K extends keyof CardMap>(type: K): IDeck<CardMap[K]> {
     return this.decks[type];
   }
 }

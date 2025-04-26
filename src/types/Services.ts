@@ -1,11 +1,11 @@
-import { IClueService } from "./IClueService";
-import { ILogService } from "./ILogService";
-import { IMarketService } from "./IMarketService";
-import { IPlayerService } from "./IPlayerService";
+import { IClue } from "domain/Clue";
+import { IMarket } from "domain/Market";
+import { IPlayer } from "domain/Player";
+import { ILog } from "infrastructure/Log";
 
 export type Services = {
-  logService: ILogService;
-  marketService: IMarketService;
-  clueService: IClueService;
-  playerService: IPlayerService;
+  log: ILog;
+  market: IMarket;
+  clue: IClue;
+  player: IPlayer;
 };
