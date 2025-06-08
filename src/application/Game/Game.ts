@@ -9,6 +9,7 @@ import { Clue } from "types/Clue";
 import { Services } from "types/Services";
 import { resolveCards } from "helpers/resolveCards";
 import { IAllDecks } from "infrastructure/AllDecks";
+import { LogEntry } from "types/Log";
 
 export class Game {
   private decks: IAllDecks;
@@ -48,26 +49,16 @@ export class Game {
     return this.services.clue.getAll();
   }
 
-  drawGate(): Gate | null {
-    const gate = this.decks.draw("gate") as Gate | null;
-    if (!gate) return null;
-    this.openGates.push(gate.location);
-    this.log.push(`Открылись врата в ${gate.location} (${gate.color})`);
-    return gate;
+  drawGate(): string | null {
+    return this.services.gate.draw();
   }
 
-  closeGate(locationName: string): boolean {
-    const index = this.openGates.findIndex((gate) => gate === locationName);
-    if (index === -1) return false;
-    this.openGates.splice(index, 1);
-    this.log.push(`Врата в ${locationName} были закрыты`);
-    return true;
+  closeGate(gateId: string): boolean {
+    return this.services.gate.discard(gateId);
   }
 
   getOpenedGatesState(): Gate[] {
-    return this.openGates
-      .map((location) => this.decks.getCardById("gate", `gate-${location}`))
-      .filter(Boolean) as Gate[];
+    return this.services.gate.getAll();
   }
 
   drawCard<T extends CardType>(type: T): CardMap[T] | null {
@@ -246,7 +237,7 @@ export class Game {
     }
   }
 
-  getLog(): string[] {
+  getLog(): LogEntry[] {
     return this.services.log.get();
   }
 }

@@ -19,7 +19,7 @@ export class Player implements IPlayer {
       .map((p) => ({ ...p, actionsTaken: [] }));
 
     sorted.forEach((p) => this.stateSvc.update(p));
-    this.logger.add("Игроки инициализированы");
+    this.logger.add("player.all.initialize");
   }
 
   canTakeAction(playerId: string, actionType: string): boolean {
@@ -37,7 +37,10 @@ export class Player implements IPlayer {
     if (!player.actionsTaken.includes(actionType)) {
       player.actionsTaken.push(actionType);
       this.stateSvc.update(player);
-      this.logger.add(`Игрок ${playerId} выполнил действие: ${actionType}`);
+      this.logger.add("player.action.record", {
+        playerId,
+        actionType,
+      });
     }
   }
 
@@ -46,48 +49,64 @@ export class Player implements IPlayer {
       p.actionsTaken = [];
       this.stateSvc.update(p);
     });
-    this.logger.add("Все действия игроков сброшены");
+    this.logger.add("player.all.resetActions");
   }
 
   move(playerId: string, locationId: string): boolean {
-    if (!this.canTakeAction(playerId, "move")) return false;
-
     const player = this.stateSvc.getById(playerId);
-    if (!player) return false;
+    const prevLocation = player?.locationId;
+
+    if (!this.canTakeAction(playerId, "move") || !player) return false;
 
     player.locationId = locationId;
     this.recordAction(playerId, "move");
-    this.logger.add(`Игрок ${playerId} переместился в ${locationId}`);
+    this.logger.add("player.move", {
+      playerId,
+      from: prevLocation,
+      to: locationId,
+    });
     this.stateSvc.update(player);
+
     return true;
   }
 
   healHealth(playerId: string, amount: number): boolean {
     const player = this.stateSvc.getById(playerId);
+
     if (!player || amount <= 0 || player.isDefeated) return false;
 
     const old = player.health;
     player.health = Math.min(player.health + amount, player.maxHealth);
-    this.logger.add(
-      `Игрок ${playerId} восстановил здоровье: ${old} → ${player.health}`
-    );
+    this.logger.add("player.healHealth", {
+      playerId,
+      oldHealth: old,
+      newHealth: player.health,
+    });
     this.stateSvc.update(player);
+
     return true;
   }
 
   loseHealth(playerId: string, amount: number): boolean {
     const player = this.stateSvc.getById(playerId);
+
     if (!player || amount <= 0 || player.isDefeated) return false;
 
     const old = player.health;
     player.health = Math.max(player.health - amount, 0);
-    this.logger.add(
-      `Игрок ${playerId} потерял здоровье: ${old} → ${player.health}`
-    );
+    this.logger.add("player.loseHealth", {
+      playerId,
+      oldHealth: old,
+      newHealth: player.health,
+    });
+
     if (player.health === 0) {
       player.isDefeated = true;
       player.deathReason = "injury";
-      this.logger.add(`Игрок ${playerId} погиб от ран`);
+      this.logger.add("player.loseHealth.death", {
+        playerId,
+        reason: "injury",
+      });
     }
     this.stateSvc.update(player);
     return true;
@@ -95,37 +114,50 @@ export class Player implements IPlayer {
 
   healSanity(playerId: string, amount: number): boolean {
     const player = this.stateSvc.getById(playerId);
+
     if (!player || amount <= 0 || player.isDefeated) return false;
 
     const old = player.sanity;
     player.sanity = Math.min(player.sanity + amount, player.maxSanity);
-    this.logger.add(
-      `Игрок ${playerId} восстановил рассудок: ${old} → ${player.sanity}`
-    );
+    this.logger.add("player.healSanity", {
+      playerId,
+      oldSanity: old,
+      newSanity: player.sanity,
+    });
     this.stateSvc.update(player);
+
     return true;
   }
 
   loseSanity(playerId: string, amount: number): boolean {
     const player = this.stateSvc.getById(playerId);
+
     if (!player || amount <= 0 || player.isDefeated) return false;
 
     const old = player.sanity;
     player.sanity = Math.max(player.sanity - amount, 0);
-    this.logger.add(
-      `Игрок ${playerId} потерял рассудок: ${old} → ${player.sanity}`
-    );
+    this.logger.add("player.loseSanity", {
+      playerId,
+      oldSanity: old,
+      newSanity: player.sanity,
+    });
+
     if (player.sanity === 0) {
       player.isDefeated = true;
       player.deathReason = "sanity";
-      this.logger.add(`Игрок ${playerId} сошел с ума`);
+      this.logger.add("player.loseSanity.death", {
+        playerId,
+        reason: "sanity",
+      });
     }
     this.stateSvc.update(player);
+
     return true;
   }
 
   resolveEncounter(playerId: string): string {
     const player = this.stateSvc.getById(playerId);
+
     if (!player) return "Игрок не найден";
 
     const loc = player.locationId;
@@ -136,13 +168,18 @@ export class Player implements IPlayer {
     else if (loc === "expedition") type = "expedition";
     else if (loc === "mysticRuins") type = "mysticRuins";
 
-    this.logger.add(`Игрок ${playerId} проходит ${type} встречу в ${loc}`);
+    this.logger.add("player.resolveEncounter", {
+      playerId,
+      location: loc,
+      encounterType: type,
+    });
+
     return type;
   }
 
   restore(players: PlayerState[]): void {
     players.forEach((p) => this.stateSvc.update({ ...p }));
-    this.logger.add("Состояние игроков восстановлено");
+    this.logger.add("player.all.restore");
   }
 
   getAll(): PlayerState[] {

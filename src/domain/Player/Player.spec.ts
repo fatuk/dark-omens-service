@@ -45,7 +45,7 @@ describe("Domain Player (unit)", () => {
     const all = stateSvc.getAll();
     expect(all.map((p) => p.turnOrder)).toEqual([0, 1, 2, 3]);
     all.forEach((p) => expect(p.actionsTaken).toEqual([]));
-    expect(log.add).toHaveBeenCalledWith("Игроки инициализированы");
+    expect(log.add).toHaveBeenCalledWith("player.all.initialize");
   });
 
   test("canTakeAction и recordAction работают корректно", () => {
@@ -56,9 +56,10 @@ describe("Domain Player (unit)", () => {
     expect(svc.canTakeAction(p.id, "jump")).toBe(true);
     svc.recordAction(p.id, "jump");
     expect(stateSvc.getById(p.id)!.actionsTaken).toContain("jump");
-    expect(log.add).toHaveBeenCalledWith(
-      `Игрок ${p.id} выполнил действие: jump`
-    );
+    expect(log.add).toHaveBeenCalledWith("player.action.record", {
+      playerId: p.id,
+      actionType: "jump",
+    });
 
     svc.recordAction(p.id, "jump");
     expect(stateSvc.getById(p.id)!.actionsTaken).toEqual(["jump"]);
@@ -78,11 +79,12 @@ describe("Domain Player (unit)", () => {
     stateSvc.getAll().forEach((p) => {
       expect(p.actionsTaken).toEqual([]);
     });
-    expect(log.add).toHaveBeenCalledWith("Все действия игроков сброшены");
+    expect(log.add).toHaveBeenCalledWith("player.all.resetActions");
   });
 
   test("move корректно перемещает и логирует", () => {
     const [p] = getFakePlayers(1);
+    const initialLocation = p.locationId;
     svc.initialize([p]);
 
     const ok = svc.move(p.id, "newLoc");
@@ -90,7 +92,11 @@ describe("Domain Player (unit)", () => {
     const updated = stateSvc.getById(p.id)!;
     expect(updated.locationId).toBe("newLoc");
     expect(updated.actionsTaken).toContain("move");
-    expect(log.add).toHaveBeenCalledWith(`Игрок ${p.id} переместился в newLoc`);
+    expect(log.add).toHaveBeenCalledWith("player.move", {
+      playerId: p.id,
+      from: initialLocation,
+      to: "newLoc",
+    });
   });
 
   test("healHealth и loseHealth обновляют здоровье и отмечают смерть", () => {
@@ -109,7 +115,10 @@ describe("Domain Player (unit)", () => {
     expect(after.health).toBe(0);
     expect(after.isDefeated).toBe(true);
     expect(after.deathReason).toBe("injury");
-    expect(log.add).toHaveBeenCalledWith(`Игрок ${p.id} погиб от ран`);
+    expect(log.add).toHaveBeenCalledWith("player.loseHealth.death", {
+      playerId: p.id,
+      reason: "injury",
+    });
   });
 
   test("healSanity и loseSanity обновляют рассудок и отмечают безумие", () => {
@@ -128,7 +137,10 @@ describe("Domain Player (unit)", () => {
     expect(after.sanity).toBe(0);
     expect(after.isDefeated).toBe(true);
     expect(after.deathReason).toBe("sanity");
-    expect(log.add).toHaveBeenCalledWith(`Игрок ${p.id} сошел с ума`);
+    expect(log.add).toHaveBeenCalledWith("player.loseSanity.death", {
+      playerId: p.id,
+      reason: "sanity",
+    });
   });
 
   test("resolveEncounter определяет тип встречи по локации", () => {
@@ -147,9 +159,11 @@ describe("Domain Player (unit)", () => {
       stateSvc.getById(p.id)!.locationId = loc;
       const t = svc.resolveEncounter(p.id);
       expect(t).toBe(expectType);
-      expect(log.add).toHaveBeenCalledWith(
-        `Игрок ${p.id} проходит ${expectType} встречу в ${loc}`
-      );
+      expect(log.add).toHaveBeenCalledWith("player.resolveEncounter", {
+        playerId: p.id,
+        encounterType: expectType,
+        location: loc,
+      });
     }
   });
 
@@ -164,6 +178,6 @@ describe("Domain Player (unit)", () => {
     expect(all.length).toBe(3);
     expect(all.map((p) => p.id)).toEqual(players.map((p) => p.id));
     expect(stateSvc.getById(players[0].id)!.health).toBe(players[0].health);
-    expect(log.add).toHaveBeenCalledWith("Состояние игроков восстановлено");
+    expect(log.add).toHaveBeenCalledWith("player.all.restore");
   });
 });

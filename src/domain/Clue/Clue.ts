@@ -3,6 +3,7 @@ import { ClueStateService } from "types/ClueStateService";
 import { IClue } from "./IClue";
 import { IDeck } from "infrastructure/Deck";
 import { ILog } from "infrastructure/Log";
+import { resolveCards } from "helpers/resolveCards";
 
 export class Clue implements IClue {
   constructor(
@@ -13,28 +14,43 @@ export class Clue implements IClue {
 
   draw(): string | null {
     const clue = this.deck.draw();
+
     if (!clue) return null;
+
     const ids = [...this.state.getClueIds(), clue.id];
     this.state.setClueIds(ids);
-    this.logger.add(`Выложена улика: ${clue.name}`);
+    this.logger.add("clue.draw", {
+      clueId: clue.id,
+      clueLocation: clue.location,
+    });
+
     return clue.id;
   }
 
   discard(id: string): boolean {
     const ids = [...this.state.getClueIds()];
     const idx = ids.indexOf(id);
-    if (idx === -1) return false;
+    const clue = this.state.getClueById(id);
+
+    console.log("================");
+    console.log(idx, clue, ids, id);
+    if (idx === -1 || !clue) return false;
+
     ids.splice(idx, 1);
     this.state.setClueIds(ids);
-    this.logger.add(`Улика ${id} сброшена`);
+    this.deck.discard(clue);
+    this.logger.add("clue.discard", {
+      clueId: clue.id,
+      clueLocation: clue.location,
+    });
+
     return true;
   }
 
   getAll(): ClueCard[] {
-    return this.state
-      .getClueIds()
-      .map((id) => this.state.getClueById(id))
-      .filter((c): c is ClueCard => Boolean(c));
+    return resolveCards(this.state.getClueIds(), (id) =>
+      this.state.getClueById(id)
+    );
   }
 
   restore(ids: string[]): void {

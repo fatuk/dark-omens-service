@@ -1,5 +1,7 @@
+import { LogEntry, LogParams } from "types/Log";
+
 export interface ILog {
-  add(message: string): void;
-  get(): string[];
+  add(key: string, params?: LogParams): void;
+  get(): LogEntry[];
   clear(): void;
 }

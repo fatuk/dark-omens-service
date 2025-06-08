@@ -25,7 +25,10 @@ export class Market implements IMarket {
       const card = this.deck.draw();
       if (!card) break;
       ids.push(card.id);
-      this.logger.add(`Добавлена карта в маркет: ${card.name}`);
+      this.logger.add("market.asset.replenish", {
+        assetId: card.id,
+        assetName: card.name,
+      });
     }
     this.state.setMarketIds(ids);
   }
@@ -40,7 +43,10 @@ export class Market implements IMarket {
 
     const asset = this.state.getAssetById(cardId) ?? null;
     if (asset) {
-      this.logger.add(`Куплена карта: ${asset.name}`);
+      this.logger.add("market.asset.buy", {
+        assetId: asset.id,
+        assetName: asset.name,
+      });
       this.replenish();
     }
     return asset;
@@ -48,7 +54,10 @@ export class Market implements IMarket {
 
   discard(asset: Asset): void {
     this.deck.discard(asset);
-    this.logger.add(`Карта сброшена в маркет: ${asset.name}`);
+    this.logger.add("market.asset.discard", {
+      assetId: asset.id,
+      assetName: asset.name,
+    });
   }
 
   getAll(): Asset[] {

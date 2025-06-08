@@ -55,9 +55,10 @@ describe("Domain Market (unit)", () => {
     ]);
     expect(deck.draw).toHaveBeenCalledTimes(3);
     expect(logService.add).toHaveBeenCalledTimes(3);
-    expect(logService.add).toHaveBeenCalledWith(
-      `Добавлена карта в маркет: ${assets[0].name}`
-    );
+    expect(logService.add).toHaveBeenCalledWith("market.asset.replenish", {
+      assetId: assets[0].id,
+      assetName: assets[0].name,
+    });
   });
 
   test("buy возвращает null если нет такой карты", () => {
@@ -76,9 +77,10 @@ describe("Domain Market (unit)", () => {
 
     expect(result).toEqual(assets[0]);
     expect(state.getMarketIds()).toEqual([assets[1].id]);
-    expect(logService.add).toHaveBeenCalledWith(
-      `Куплена карта: ${assets[0].name}`
-    );
+    expect(logService.add).toHaveBeenCalledWith("market.asset.buy", {
+      assetId: assets[0].id,
+      assetName: assets[0].name,
+    });
     expect(replenishSpy).toHaveBeenCalled();
   });
 
@@ -86,9 +88,10 @@ describe("Domain Market (unit)", () => {
     const [asset] = getFakeAssets(1);
     svc.discard(asset);
     expect(deck.discard).toHaveBeenCalledWith(asset);
-    expect(logService.add).toHaveBeenCalledWith(
-      `Карта сброшена в маркет: ${asset.name}`
-    );
+    expect(logService.add).toHaveBeenCalledWith("market.asset.discard", {
+      assetId: asset.id,
+      assetName: asset.name,
+    });
   });
 
   test("getAll возвращает только валидные Asset[]", () => {

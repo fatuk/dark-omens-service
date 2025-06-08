@@ -17,6 +17,8 @@ import { Market } from "domain/Market";
 import { Clue } from "domain/Clue";
 import { Player } from "domain/Player";
 import { Game } from "application/Game";
+import { GateStateService } from "types/GateStateService";
+import { Gate } from "domain/Gate";
 
 interface customWindow extends Window {
   game?: any;
@@ -61,13 +63,7 @@ const init = async () => {
       leadInvestigatorId: "",
       currentInvestigatorId: "",
     },
-    decks: {
-      asset: allDecks.getManager("asset").getState(),
-      spell: allDecks.getManager("spell").getState(),
-      condition: allDecks.getManager("condition").getState(),
-      gate: allDecks.getManager("gate").getState(),
-      clue: allDecks.getManager("clue").getState(),
-    },
+    decks: allDecks.getState(),
     clues: [],
     openGates: [],
     players,
@@ -103,17 +99,27 @@ const init = async () => {
       gameState.players = [];
     },
   };
+  const gateState: GateStateService = {
+    getGateIds: () => gameState.openGates,
+    setGateIds: (ids: string[]) => {
+      gameState.openGates = ids;
+    },
+    getGateById: (id: string) => gateDb.get(id),
+  };
   const assetDeck = allDecks.getManager("asset");
   const clueDeck = allDecks.getManager("clue");
+  const gateDeck = allDecks.getManager("gate");
   const market = new Market(assetDeck, marketState, log);
   const clue = new Clue(clueDeck, clueState, log);
   const player = new Player(playerState, log);
+  const gate = new Gate(gateDeck, gateState, log);
 
   const services: Services = {
     log,
     market,
     clue,
     player,
+    gate,
   };
 
   const game = new Game(allDecks, players, services);

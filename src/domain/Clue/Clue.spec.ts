@@ -45,7 +45,10 @@ describe("Domain Clue (unit)", () => {
     const result = svc.draw();
     expect(result).toBe(clues[0].id);
     expect(state.getClueIds()).toEqual([clues[0].id]);
-    expect(logger.add).toHaveBeenCalledWith(`Выложена улика: ${clues[0].name}`);
+    expect(logger.add).toHaveBeenCalledWith("clue.draw", {
+      clueId: clues[0].id,
+      clueLocation: clues[0].location,
+    });
   });
 
   test("draw возвращает null, если колода пуста", () => {
@@ -59,11 +62,15 @@ describe("Domain Clue (unit)", () => {
   test("discard удаляет улику и логирует", () => {
     const clues = getFakeClues(2);
     state.setClueIds([clues[0].id, clues[1].id]);
+    state.getClueById = (id: string) => clues.find((c) => c.id === id);
 
     const removed = svc.discard(clues[0].id);
     expect(removed).toBe(true);
     expect(state.getClueIds()).toEqual([clues[1].id]);
-    expect(logger.add).toHaveBeenCalledWith(`Улика ${clues[0].id} сброшена`);
+    expect(logger.add).toHaveBeenCalledWith("clue.discard", {
+      clueId: clues[0].id,
+      clueLocation: clues[0].location,
+    });
   });
 
   test("discard возвращает false для несуществующего ID", () => {

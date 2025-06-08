@@ -1,6 +1,7 @@
 import { CardMap } from "./Card";
 import { DeckManagerState } from "./DeckManagerState";
 import { GamePhase } from "./GamePhase";
+import { LogEntry } from "./Log";
 import { PlayerState } from "./PlayerState";
 
 export type GameState = {
@@ -12,7 +13,7 @@ export type GameState = {
   };
   decks: { [K in keyof CardMap]: DeckManagerState };
   market: string[];
-  log: string[];
+  log: LogEntry[];
   players: PlayerState[];
   openGates: string[];
   clues: string[];

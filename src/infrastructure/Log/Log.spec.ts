@@ -1,5 +1,6 @@
 import { describe, beforeEach, test, expect, vi } from "vitest";
 import { Log } from "./Log";
+import type { LogEntry, LogParams } from "types/Log";
 
 describe("Log", () => {
   let logger: Log;
@@ -9,26 +10,53 @@ describe("Log", () => {
     vi.restoreAllMocks();
   });
 
-  test("add() записывает сообщение с временной меткой", () => {
+  test("add() сохраняет запись с ключом и временной меткой без params", () => {
     vi.spyOn(Date.prototype, "toLocaleString").mockReturnValue(
       "2025-01-01 12:00:00"
     );
 
-    logger.add("Hello World");
+    logger.add("event.key");
 
     const entries = logger.get();
     expect(entries).toHaveLength(1);
-    expect(entries[0]).toBe("[2025-01-01 12:00:00] Hello World");
+    expect(entries[0]).toEqual<LogEntry>({
+      key: "event.key",
+      params: undefined,
+      timestamp: "2025-01-01 12:00:00",
+    });
+  });
+
+  test("add() сохраняет запись с ключом, параметрами и временной меткой", () => {
+    vi.spyOn(Date.prototype, "toLocaleString").mockReturnValue(
+      "2025-02-02 13:00:00"
+    );
+    const params: LogParams = { foo: "bar" };
+
+    logger.add("event.with.params", params);
+
+    const entries = logger.get();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toEqual<LogEntry>({
+      key: "event.with.params",
+      params,
+      timestamp: "2025-02-02 13:00:00",
+    });
   });
 
   test("get() возвращает копию массива, а не оригинал", () => {
     vi.spyOn(Date.prototype, "toLocaleString").mockReturnValue("T");
     logger.add("Msg");
+
     const first = logger.get();
-    first.push("mutated");
+    first.push({ key: "hax", params: undefined, timestamp: "X" });
 
     const second = logger.get();
-    expect(second).toEqual(["[T] Msg"]);
+    expect(second).toHaveLength(1);
+    expect(second[0]).toEqual<LogEntry>({
+      key: "Msg",
+      params: undefined,
+      timestamp: "T",
+    });
   });
 
   test("clear() очищает весь лог", () => {
