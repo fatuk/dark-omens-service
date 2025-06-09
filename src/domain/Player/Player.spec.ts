@@ -1,4 +1,4 @@
-import { describe, beforeEach, test, expect, vi } from "vitest";
+import { describe, beforeEach, test, expect } from "vitest";
 import type { PlayerState } from "types/PlayerState";
 import { ILog } from "infrastructure/Log";
 import { IPlayer } from "./IPlayer";
