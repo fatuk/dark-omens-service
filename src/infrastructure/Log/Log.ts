@@ -1,19 +1,21 @@
 import { LogEntry, LogParams } from "types/Log";
 import { ILog } from "./ILog";
+import { ILogState } from "./ILogState";
 
 export class Log implements ILog {
-  private logs: LogEntry[] = [];
+  constructor(private readonly state: ILogState) {}
 
   add(key: string, params?: LogParams): void {
     const timestamp = new Date().toLocaleString();
-    this.logs.push({ key, params, timestamp });
+
+    this.state.add({ key, params, timestamp });
   }
 
-  get(): LogEntry[] {
-    return [...this.logs];
+  getState() {
+    return this.state.getState();
   }
 
-  clear(): void {
-    this.logs = [];
+  setState(logs: LogEntry[]): void {
+    this.state.setState(logs);
   }
 }

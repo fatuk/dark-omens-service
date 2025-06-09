@@ -11,7 +11,7 @@ export interface IPlayer {
   loseSanity(playerId: string, amount: number): boolean;
   resolveEncounter(playerId: string): string;
   initialize(initialPlayers: PlayerState[]): void;
-  getAll(): PlayerState[];
   getById(id: string): PlayerState | undefined;
-  restore(player: PlayerState[]): void;
+  getState(): PlayerState[];
+  setState(player: PlayerState[]): void;
 }

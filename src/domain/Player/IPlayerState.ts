@@ -1,6 +1,6 @@
-import { PlayerState } from "./PlayerState";
+import { PlayerState } from "types/PlayerState";
 
-export interface PlayerStateService {
+export interface IPlayerState {
   getAll(): PlayerState[];
   getById(id: string): PlayerState | undefined;
   update(player: PlayerState): void;

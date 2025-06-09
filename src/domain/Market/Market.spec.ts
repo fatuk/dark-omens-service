@@ -1,13 +1,13 @@
 import { Asset } from "types/Asset";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { MarketStateService } from "types/MarketStateService";
 import { ILog } from "infrastructure/Log";
 import { IMarket } from "./IMarket";
 import { getFakeAssets } from "tests/helpers/getFakeAsset";
 import { Market } from "./Market";
+import { IMarketState } from "./IMarketState";
 
 describe("Domain Market (unit)", () => {
-  let state: MarketStateService;
+  let state: IMarketState;
   let deck: { draw: () => Asset | null; discard: (a: Asset) => void };
   let logService: ILog;
   let svc: IMarket;
@@ -31,8 +31,8 @@ describe("Domain Market (unit)", () => {
 
     logService = {
       add: vi.fn(),
-      get: vi.fn(() => []),
-      clear: vi.fn(),
+      getState: vi.fn(() => []),
+      setState: vi.fn(() => {}),
     };
 
     svc = new Market(deck as any, state, logService, 3);
@@ -94,26 +94,26 @@ describe("Domain Market (unit)", () => {
     });
   });
 
-  test("getAll возвращает только валидные Asset[]", () => {
+  test("getState возвращает только валидные Asset[]", () => {
     const assets = getFakeAssets(3);
     state.setMarketIds(assets.map((a) => a.id));
     state.getAssetById = (id) =>
       id === assets[1].id ? undefined : assets.find((a) => a.id === id);
 
-    const all = svc.getAll();
+    const all = svc.getState();
     expect(all).toEqual([assets[0], assets[2]]);
   });
 
-  test("restore восстанавливает заранее заданный список ID", () => {
+  test("setState восстанавливает заранее заданный список ID", () => {
     const assets = getFakeAssets(3);
     state.getAssetById = (id) => assets.find((a) => a.id === id);
 
     const restoreIds = [assets[2].id, assets[0].id];
-    svc.restore(restoreIds);
+    svc.setState(restoreIds);
 
     expect(state.getMarketIds()).toEqual(restoreIds);
 
-    const restored = svc.getAll();
+    const restored = svc.getState();
 
     expect(restored).toEqual([assets[2], assets[0]]);
   });

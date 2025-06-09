@@ -1,13 +1,13 @@
 import { PlayerState } from "types/PlayerState";
-import { PlayerStateService } from "types/PlayerStateService";
 import { IPlayer } from "./IPlayer";
 import { ILog } from "infrastructure/Log";
+import { IPlayerState } from "./IPlayerState";
 
 const DEFAULT_MAX_ACTIONS = 2;
 
 export class Player implements IPlayer {
   constructor(
-    private readonly stateSvc: PlayerStateService,
+    private readonly stateSvc: IPlayerState,
     private readonly logger: ILog,
     private readonly maxActions = DEFAULT_MAX_ACTIONS
   ) {}
@@ -177,13 +177,13 @@ export class Player implements IPlayer {
     return type;
   }
 
-  restore(players: PlayerState[]): void {
-    players.forEach((p) => this.stateSvc.update({ ...p }));
-    this.logger.add("player.all.restore");
+  getState(): PlayerState[] {
+    return this.stateSvc.getAll();
   }
 
-  getAll(): PlayerState[] {
-    return this.stateSvc.getAll();
+  setState(players: PlayerState[]): void {
+    players.forEach((p) => this.stateSvc.update({ ...p }));
+    this.logger.add("player.all.restore");
   }
 
   getById(id: string): PlayerState | undefined {

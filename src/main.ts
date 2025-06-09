@@ -1,24 +1,24 @@
 import { SpellRepository } from "repositories/SpellRepository";
 import { AssetRepository } from "./repositories/AssetRepository";
 import { ConditionRepository } from "repositories/ConditionRepository";
-
 import { GateRepository } from "repositories/GateRepository";
 import { ClueRepository } from "repositories/ClueRepository";
-import { MarketStateService } from "types/MarketStateService";
-import { ClueStateService } from "types/ClueStateService";
+import { PlayerRepository } from "repositories/PlayerRepository";
+
+import { Game } from "application/Game";
+import { GameFlow, IGameFlowState } from "application/GameFlow";
+import { IMarketState, Market } from "domain/Market";
+import { Clue, IClueState } from "domain/Clue";
+import { IPlayerState, Player } from "domain/Player";
+import { Gate, IGateState } from "domain/Gate";
+import { AllDecks } from "infrastructure/AllDecks";
+import { ILogState, Log } from "infrastructure/Log";
+
 import { GameState } from "types/GameState";
 import { Services } from "types/Services";
-import { PlayerStateService } from "types/PlayerStateService";
 import { PlayerState } from "types/PlayerState";
-import { PlayerRepository } from "repositories/PlayerRepository";
-import { AllDecks } from "infrastructure/AllDecks";
-import { Log } from "infrastructure/Log";
-import { Market } from "domain/Market";
-import { Clue } from "domain/Clue";
-import { Player } from "domain/Player";
-import { Game } from "application/Game";
-import { GateStateService } from "types/GateStateService";
-import { Gate } from "domain/Gate";
+import { GamePhase } from "types/GamePhase";
+import { LogEntry } from "types/Log";
 
 interface customWindow extends Window {
   game?: any;
@@ -70,22 +70,33 @@ const init = async () => {
     log: [],
   };
 
-  const log = new Log();
-  const marketState: MarketStateService = {
+  const logState: ILogState = {
+    getState: () => gameState.log,
+    setState: (log: LogEntry[]) => {
+      gameState.log = log;
+    },
+    add: (entry: any) => {
+      gameState.log.push(entry);
+    },
+  };
+
+  const marketState: IMarketState = {
     getMarketIds: () => gameState.market,
     setMarketIds: (ids: string[]) => {
       gameState.market = ids;
     },
     getAssetById: (id: string) => assetDb.get(id),
   };
-  const clueState: ClueStateService = {
+
+  const clueState: IClueState = {
     getClueIds: () => gameState.clues,
     setClueIds: (ids: string[]) => {
       gameState.clues = ids;
     },
     getClueById: (id: string) => clueDb.get(id),
   };
-  const playerState: PlayerStateService = {
+
+  const playerState: IPlayerState = {
     getAll: () => gameState.players,
     getById: (id: string) => gameState.players.find((p) => p.id === id),
     update: (playerState: PlayerState): void => {
@@ -99,20 +110,42 @@ const init = async () => {
       gameState.players = [];
     },
   };
-  const gateState: GateStateService = {
+
+  const gateState: IGateState = {
     getGateIds: () => gameState.openGates,
     setGateIds: (ids: string[]) => {
       gameState.openGates = ids;
     },
     getGateById: (id: string) => gateDb.get(id),
   };
+
+  const gameFlowState: IGameFlowState = {
+    getTurn: () => gameState.turn,
+    setPhase: (phase: GamePhase) => {
+      gameState.turn.phase = phase;
+    },
+    setRound: (round: number) => {
+      gameState.turn.round = round;
+    },
+    setLeadInvestigatorId: (id: string) => {
+      gameState.turn.leadInvestigatorId = id;
+    },
+    setCurrentInvestigatorId: (id: string) => {
+      gameState.turn.currentInvestigatorId = id;
+    },
+    getPlayers: () => gameState.players,
+  };
+
   const assetDeck = allDecks.getManager("asset");
   const clueDeck = allDecks.getManager("clue");
   const gateDeck = allDecks.getManager("gate");
+
+  const log = new Log(logState);
   const market = new Market(assetDeck, marketState, log);
   const clue = new Clue(clueDeck, clueState, log);
   const player = new Player(playerState, log);
   const gate = new Gate(gateDeck, gateState, log);
+  const gameFlow = new GameFlow(gameFlowState, log);
 
   const services: Services = {
     log,
@@ -120,6 +153,7 @@ const init = async () => {
     clue,
     player,
     gate,
+    gameFlow,
   };
 
   const game = new Game(allDecks, players, services);

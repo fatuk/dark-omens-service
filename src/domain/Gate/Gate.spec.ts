@@ -3,18 +3,20 @@ import type { Gate as GateCard } from "types/Gate";
 import { ILog } from "infrastructure/Log";
 import { IGate } from "./IGate";
 import { Gate } from "./Gate";
-import { GateStateService } from "types/GateStateService";
 import { getFakeGates } from "tests/helpers/getFakeGates";
+import { testLog } from "tests/testLog";
+import { IGateState } from "./IGateState";
 
 describe("Domain Gate (unit)", () => {
-  let state: GateStateService;
+  let state: IGateState;
   let deck: { draw: () => GateCard | null; discard: (c: GateCard) => void };
   let logger: ILog;
   let svc: IGate;
 
   beforeEach(() => {
-    const allGates = getFakeGates(5);
     let ids: string[] = [];
+    vi.clearAllMocks();
+    const allGates = getFakeGates(5);
 
     state = {
       getGateIds: () => [...ids],
@@ -29,11 +31,7 @@ describe("Domain Gate (unit)", () => {
       discard: vi.fn(),
     };
 
-    logger = {
-      add: vi.fn(),
-      get: vi.fn(() => []),
-      clear: vi.fn(),
-    };
+    logger = testLog;
 
     svc = new Gate(deck as any, state, logger);
   });
@@ -83,27 +81,24 @@ describe("Domain Gate (unit)", () => {
     expect(logger.add).not.toHaveBeenCalled();
   });
 
-  // test("getAll возвращает все валидные Gate[]", () => {
+  // test("getState возвращает все валидные Gate[]", () => {
   //   const gates = getFakeGates(3);
 
-  //   state.setGateIds(gates.map((g) => g.id));
-  //   state.getGateById = (id) =>
-  //     id === gates[1].id ? undefined : gates.find((g) => g.id === id);
+  //   svc.setState(gates.map((g) => g.id));
 
-  //   const all = svc.getAll();
+  //   const all = svc.getState();
 
   //   expect(all).toEqual([gates[0], gates[2]]);
   // });
 
-  // test("restore восстанавливает заранее заданный список ID", () => {
+  // test("setState восстанавливает заранее заданный список ID", () => {
   //   const gates = getFakeGates(3);
   //   state.getGateById = (id) => gates.find((g) => g.id === id);
 
   //   const restoreIds = [gates[2].id, gates[0].id];
-  //   svc.restore(restoreIds);
+  //   svc.setState(restoreIds);
 
-  //   expect(state.getGateIds()).toEqual(restoreIds);
-  //   const restored = svc.getAll();
+  //   const restored = svc.getState();
   //   expect(restored).toEqual([gates[2], gates[0]]);
   // });
 });

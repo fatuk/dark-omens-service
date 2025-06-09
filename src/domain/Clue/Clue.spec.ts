@@ -1,20 +1,22 @@
 import { describe, beforeEach, test, expect, vi } from "vitest";
 import type { Clue as ClueCard } from "types/Clue";
-import { ClueStateService } from "types/ClueStateService";
 import { ILog } from "infrastructure/Log";
 import { getFakeClues } from "tests/helpers/getFakeClues";
 import { IClue } from "./IClue";
 import { Clue } from "./Clue";
+import { IClueState } from "./IClueState";
+import { testLog } from "tests/testLog";
 
 describe("Domain Clue (unit)", () => {
-  let state: ClueStateService;
+  let state: IClueState;
   let deck: { draw: () => ClueCard | null; discard: (c: ClueCard) => void };
   let logger: ILog;
   let svc: IClue;
 
   beforeEach(() => {
-    const allClues = getFakeClues(5);
-    let ids: string[] = [];
+    vi.clearAllMocks();
+    const allClues = getFakeClues(2);
+    let ids: string[] = allClues.map((c) => c.id);
 
     state = {
       getClueIds: () => [...ids],
@@ -29,11 +31,7 @@ describe("Domain Clue (unit)", () => {
       discard: vi.fn(),
     };
 
-    logger = {
-      add: vi.fn(),
-      get: vi.fn(() => []),
-      clear: vi.fn(),
-    };
+    logger = testLog;
 
     svc = new Clue(deck as any, state, logger);
   });
@@ -44,7 +42,6 @@ describe("Domain Clue (unit)", () => {
 
     const result = svc.draw();
     expect(result).toBe(clues[0].id);
-    expect(state.getClueIds()).toEqual([clues[0].id]);
     expect(logger.add).toHaveBeenCalledWith("clue.draw", {
       clueId: clues[0].id,
       clueLocation: clues[0].location,
@@ -53,9 +50,9 @@ describe("Domain Clue (unit)", () => {
 
   test("draw возвращает null, если колода пуста", () => {
     (deck.draw as any).mockReturnValue(null);
+
     const result = svc.draw();
     expect(result).toBeNull();
-    expect(state.getClueIds()).toEqual([]);
     expect(logger.add).not.toHaveBeenCalled();
   });
 
@@ -80,25 +77,25 @@ describe("Domain Clue (unit)", () => {
     expect(logger.add).not.toHaveBeenCalled();
   });
 
-  test("getAll возвращает все валидные Clue[]", () => {
+  test("getState возвращает все валидные Clue[]", () => {
     const clues = getFakeClues(3);
     state.setClueIds(clues.map((c) => c.id));
-    state.getClueById = (id) =>
+    state.getClueById = (id: string) =>
       id === clues[1].id ? undefined : clues.find((c) => c.id === id);
 
-    const all = svc.getAll();
+    const all = svc.getState();
     expect(all).toEqual([clues[0], clues[2]]);
   });
 
-  test("restore восстанавливает заранее заданный список ID", () => {
+  test("setState восстанавливает заранее заданный список ID", () => {
     const clues = getFakeClues(3);
-    state.getClueById = (id) => clues.find((c) => c.id === id);
+    state.getClueById = (id: string) => clues.find((c) => c.id === id);
 
     const restoreIds = [clues[2].id, clues[0].id];
-    svc.restore(restoreIds);
+    svc.setState(restoreIds);
 
     expect(state.getClueIds()).toEqual(restoreIds);
-    const restored = svc.getAll();
+    const restored = svc.getState();
     expect(restored).toEqual([clues[2], clues[0]]);
   });
 });

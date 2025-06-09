@@ -1,14 +1,14 @@
-import { Gate as GateCard } from "types/Gate";
-import { GateStateService } from "types/GateStateService";
+import type { Gate as GateCard } from "types/Gate";
 import { IGate } from "./IGate";
 import { IDeck } from "infrastructure/Deck";
 import { ILog } from "infrastructure/Log";
 import { resolveCards } from "helpers/resolveCards";
+import { IGateState } from "./IGateState";
 
 export class Gate implements IGate {
   constructor(
     private readonly deck: IDeck<GateCard>,
-    private readonly state: GateStateService,
+    private readonly state: IGateState,
     private readonly logger: ILog
   ) {}
 
@@ -51,13 +51,13 @@ export class Gate implements IGate {
     return true;
   }
 
-  getAll(): GateCard[] {
+  getState(): GateCard[] {
     return resolveCards(this.state.getGateIds(), (id) =>
       this.state.getGateById(id)
     );
   }
 
-  restore(ids: string[]): void {
+  setState(ids: string[]): void {
     this.state.setGateIds([...ids]);
   }
 }

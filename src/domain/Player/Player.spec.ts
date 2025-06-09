@@ -1,14 +1,15 @@
 import { describe, beforeEach, test, expect, vi } from "vitest";
 import type { PlayerState } from "types/PlayerState";
-import type { PlayerStateService } from "types/PlayerStateService";
 import { ILog } from "infrastructure/Log";
 import { IPlayer } from "./IPlayer";
 import { Player } from "./Player";
 import { getFakePlayers } from "tests/helpers/getFakePlayers";
+import { IPlayerState } from "./IPlayerState";
+import { testLog } from "tests/testLog";
 
 describe("Domain Player (unit)", () => {
-  let stateSvc: PlayerStateService;
-  let log: ILog;
+  let stateSvc: IPlayerState;
+  let logger: ILog;
   let svc: IPlayer;
   let store: PlayerState[];
 
@@ -28,13 +29,9 @@ describe("Domain Player (unit)", () => {
       },
     };
 
-    log = {
-      add: vi.fn(),
-      get: vi.fn(() => []),
-      clear: vi.fn(),
-    };
+    logger = testLog;
 
-    svc = new Player(stateSvc, log);
+    svc = new Player(stateSvc, logger);
   });
 
   test("initialize сортирует по turnOrder и сбрасывает actionsTaken", () => {
@@ -45,7 +42,7 @@ describe("Domain Player (unit)", () => {
     const all = stateSvc.getAll();
     expect(all.map((p) => p.turnOrder)).toEqual([0, 1, 2, 3]);
     all.forEach((p) => expect(p.actionsTaken).toEqual([]));
-    expect(log.add).toHaveBeenCalledWith("player.all.initialize");
+    expect(logger.add).toHaveBeenCalledWith("player.all.initialize");
   });
 
   test("canTakeAction и recordAction работают корректно", () => {
@@ -56,7 +53,7 @@ describe("Domain Player (unit)", () => {
     expect(svc.canTakeAction(p.id, "jump")).toBe(true);
     svc.recordAction(p.id, "jump");
     expect(stateSvc.getById(p.id)!.actionsTaken).toContain("jump");
-    expect(log.add).toHaveBeenCalledWith("player.action.record", {
+    expect(logger.add).toHaveBeenCalledWith("player.action.record", {
       playerId: p.id,
       actionType: "jump",
     });
@@ -79,7 +76,7 @@ describe("Domain Player (unit)", () => {
     stateSvc.getAll().forEach((p) => {
       expect(p.actionsTaken).toEqual([]);
     });
-    expect(log.add).toHaveBeenCalledWith("player.all.resetActions");
+    expect(logger.add).toHaveBeenCalledWith("player.all.resetActions");
   });
 
   test("move корректно перемещает и логирует", () => {
@@ -92,7 +89,7 @@ describe("Domain Player (unit)", () => {
     const updated = stateSvc.getById(p.id)!;
     expect(updated.locationId).toBe("newLoc");
     expect(updated.actionsTaken).toContain("move");
-    expect(log.add).toHaveBeenCalledWith("player.move", {
+    expect(logger.add).toHaveBeenCalledWith("player.move", {
       playerId: p.id,
       from: initialLocation,
       to: "newLoc",
@@ -115,7 +112,7 @@ describe("Domain Player (unit)", () => {
     expect(after.health).toBe(0);
     expect(after.isDefeated).toBe(true);
     expect(after.deathReason).toBe("injury");
-    expect(log.add).toHaveBeenCalledWith("player.loseHealth.death", {
+    expect(logger.add).toHaveBeenCalledWith("player.loseHealth.death", {
       playerId: p.id,
       reason: "injury",
     });
@@ -137,7 +134,7 @@ describe("Domain Player (unit)", () => {
     expect(after.sanity).toBe(0);
     expect(after.isDefeated).toBe(true);
     expect(after.deathReason).toBe("sanity");
-    expect(log.add).toHaveBeenCalledWith("player.loseSanity.death", {
+    expect(logger.add).toHaveBeenCalledWith("player.loseSanity.death", {
       playerId: p.id,
       reason: "sanity",
     });
@@ -159,7 +156,7 @@ describe("Domain Player (unit)", () => {
       stateSvc.getById(p.id)!.locationId = loc;
       const t = svc.resolveEncounter(p.id);
       expect(t).toBe(expectType);
-      expect(log.add).toHaveBeenCalledWith("player.resolveEncounter", {
+      expect(logger.add).toHaveBeenCalledWith("player.resolveEncounter", {
         playerId: p.id,
         encounterType: expectType,
         location: loc,
@@ -167,17 +164,17 @@ describe("Domain Player (unit)", () => {
     }
   });
 
-  test("restore очищает и восстанавливает игроков", () => {
+  test("setState очищает и восстанавливает игроков", () => {
     const players = getFakePlayers(3);
     svc.initialize(players);
 
     store[0].health = 1;
-    svc.restore(players);
+    svc.setState(players);
 
     const all = stateSvc.getAll();
     expect(all.length).toBe(3);
     expect(all.map((p) => p.id)).toEqual(players.map((p) => p.id));
     expect(stateSvc.getById(players[0].id)!.health).toBe(players[0].health);
-    expect(log.add).toHaveBeenCalledWith("player.all.restore");
+    expect(logger.add).toHaveBeenCalledWith("player.all.restore");
   });
 });

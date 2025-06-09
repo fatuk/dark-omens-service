@@ -1,9 +1,9 @@
 import { Asset } from "types/Asset";
 import { resolveCards } from "helpers/resolveCards";
 import { IMarket } from "./IMarket";
-import { MarketStateService } from "types/MarketStateService";
 import type { IDeck } from "infrastructure/Deck";
 import { ILog } from "infrastructure/Log";
+import { IMarketState } from "./IMarketState";
 
 const DEFAULT_MAX_MARKET_CARDS = 4;
 
@@ -12,7 +12,7 @@ export class Market implements IMarket {
 
   constructor(
     private readonly deck: IDeck<Asset>,
-    private readonly state: MarketStateService,
+    private readonly state: IMarketState,
     private readonly logger: ILog,
     maxSize = DEFAULT_MAX_MARKET_CARDS
   ) {
@@ -60,13 +60,13 @@ export class Market implements IMarket {
     });
   }
 
-  getAll(): Asset[] {
+  getState(): Asset[] {
     return resolveCards(this.state.getMarketIds(), (id) =>
       this.state.getAssetById(id)
     );
   }
 
-  restore(ids: string[]): void {
+  setState(ids: string[]): void {
     this.state.setMarketIds(ids);
     const assets = resolveCards(ids, (id) => this.state.getAssetById(id));
 

@@ -1,6 +1,6 @@
 import { Clue as ClueCard } from "types/Clue";
-import { ClueStateService } from "types/ClueStateService";
-import { IClue } from "./IClue";
+import type { IClue } from "./IClue";
+import type { IClueState } from "./IClueState";
 import { IDeck } from "infrastructure/Deck";
 import { ILog } from "infrastructure/Log";
 import { resolveCards } from "helpers/resolveCards";
@@ -8,7 +8,7 @@ import { resolveCards } from "helpers/resolveCards";
 export class Clue implements IClue {
   constructor(
     private readonly deck: IDeck<ClueCard>,
-    private readonly state: ClueStateService,
+    private readonly state: IClueState,
     private readonly logger: ILog
   ) {}
 
@@ -32,8 +32,6 @@ export class Clue implements IClue {
     const idx = ids.indexOf(id);
     const clue = this.state.getClueById(id);
 
-    console.log("================");
-    console.log(idx, clue, ids, id);
     if (idx === -1 || !clue) return false;
 
     ids.splice(idx, 1);
@@ -47,13 +45,13 @@ export class Clue implements IClue {
     return true;
   }
 
-  getAll(): ClueCard[] {
+  getState(): ClueCard[] {
     return resolveCards(this.state.getClueIds(), (id) =>
       this.state.getClueById(id)
     );
   }
 
-  restore(ids: string[]): void {
+  setState(ids: string[]): void {
     this.state.setClueIds([...ids]);
   }
 }

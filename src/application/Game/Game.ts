@@ -13,27 +13,20 @@ import { LogEntry } from "types/Log";
 
 export class Game {
   private decks: IAllDecks;
-  private log: string[] = [];
-  private turn: GameState["turn"] = {
-    round: 1,
-    phase: "Action",
-    leadInvestigatorId: "",
-    currentInvestigatorId: "",
-  };
-  private players: PlayerState[] = [];
   private openGates: string[] = [];
   private services: Services;
 
   constructor(decks: IAllDecks, players: PlayerState[], services: Services) {
     this.services = services;
     this.decks = decks;
-    const sorted = this.services.player
-      .getAll()
+    const sortedPlayers = this.services.player
+      .getState()
       .sort((a, b) => a.turnOrder - b.turnOrder);
-    this.turn.leadInvestigatorId = sorted[0]?.id ?? "";
-    this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
+
     this.services.player.resetActions();
     this.services.player.initialize(players);
+    this.services.gameFlow.passLeadInvestigator(sortedPlayers[0]?.id ?? "");
+    this.services.gameFlow.nextInvestigator();
     this.services.market.replenish();
   }
 
@@ -46,7 +39,7 @@ export class Game {
   }
 
   getCluesState(): Clue[] {
-    return this.services.clue.getAll();
+    return this.services.clue.getState();
   }
 
   drawGate(): string | null {
@@ -57,8 +50,8 @@ export class Game {
     return this.services.gate.discard(gateId);
   }
 
-  getOpenedGatesState(): Gate[] {
-    return this.services.gate.getAll();
+  getOpenedGates(): Gate[] {
+    return this.services.gate.getState();
   }
 
   drawCard<T extends CardType>(type: T): CardMap[T] | null {
@@ -79,18 +72,18 @@ export class Game {
 
   getState(): GameState {
     return {
-      turn: { ...this.turn },
-      market: this.services.market.getAll().map((c) => c.id),
-      log: this.services.log.get(),
-      players: this.services.player.getAll(),
+      turn: { ...this.services.gameFlow.getTurn() },
+      market: this.services.market.getState().map((c) => c.id),
+      log: this.services.log.getState(),
+      players: this.services.player.getState(),
       openGates: [...this.openGates],
       decks: this.decks.getState(),
-      clues: this.services.clue.getAll().map((c) => c.id),
+      clues: this.services.clue.getState().map((c) => c.id),
     };
   }
 
   getMarketState(): Asset[] {
-    return this.services.market.getAll();
+    return this.services.market.getState();
   }
 
   replenishMarket(): void {
@@ -165,46 +158,15 @@ export class Game {
   }
 
   nextPhase() {
-    switch (this.turn.phase) {
-      case "Action":
-        this.turn.phase = "Encounter";
-        this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
-        this.resetActions();
-        this.log.push("Фаза: встречи");
-        break;
-      case "Encounter":
-        this.turn.phase = "Mythos";
-        this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
-        this.log.push("Фаза: мифов");
-        break;
-      case "Mythos":
-        this.turn.phase = "Action";
-        this.turn.round++;
-        this.passLeadInvestigator();
-        this.turn.currentInvestigatorId = this.turn.leadInvestigatorId;
-        this.resetActions();
-        this.log.push(`Раунд ${this.turn.round}`);
-        break;
-    }
+    this.services.gameFlow.nextPhase();
   }
 
   nextInvestigator() {
-    const index = this.players.findIndex(
-      (p) => p.id === this.turn.currentInvestigatorId
-    );
-    if (index === -1) return;
-    const next = this.players[(index + 1) % this.players.length];
-    this.turn.currentInvestigatorId = next.id;
-    this.log.push(`Ход переходит к игроку: ${next.id}`);
+    this.services.gameFlow.nextInvestigator();
   }
 
-  passLeadInvestigator() {
-    const index = this.players.findIndex(
-      (p) => p.id === this.turn.leadInvestigatorId
-    );
-    const next = this.players[(index + 1) % this.players.length];
-    this.turn.leadInvestigatorId = next.id;
-    this.log.push(`Новый лидер: ${next.id}`);
+  passLeadInvestigator(playerId: string) {
+    this.services.gameFlow.passLeadInvestigator(playerId);
   }
 
   restoreFromState(
@@ -213,17 +175,13 @@ export class Game {
       [K in keyof CardMap]: Map<string, CardMap[K]>;
     }
   ) {
-    this.turn = state.turn;
     this.decks.restoreFromState(state.decks, dbs);
-    this.log = state.log;
-    this.openGates = state.openGates;
-
-    this.services.market.restore(state.market);
-    this.services.clue.restore(state.clues);
-    this.services.player.restore(state.players);
-
-    this.services.log.clear();
-    state.log.forEach((msg) => this.services.log.add(msg));
+    this.services.gameFlow.setTurn(state.turn);
+    this.services.gate.setState(state.openGates);
+    this.services.market.setState(state.market);
+    this.services.clue.setState(state.clues);
+    this.services.player.setState(state.players);
+    this.services.log.setState(state.log);
   }
 
   apply(action: GameAction) {
@@ -238,6 +196,6 @@ export class Game {
   }
 
   getLog(): LogEntry[] {
-    return this.services.log.get();
+    return this.services.log.getState();
   }
 }

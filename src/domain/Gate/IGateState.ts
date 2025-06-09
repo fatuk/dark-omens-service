@@ -1,6 +1,6 @@
-import { Gate } from "./Gate";
+import { Gate } from "types/Gate";
 
-export interface GateStateService {
+export interface IGateState {
   getGateIds(): string[];
   setGateIds(ids: string[]): void;
   getGateById(id: string): Gate | undefined;

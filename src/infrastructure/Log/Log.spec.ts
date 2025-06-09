@@ -1,12 +1,25 @@
 import { describe, beforeEach, test, expect, vi } from "vitest";
 import { Log } from "./Log";
 import type { LogEntry, LogParams } from "types/Log";
+import { ILogState } from "./ILogState";
 
 describe("Log", () => {
   let logger: Log;
+  let stateMethods: ILogState;
+  let state: LogEntry[] = [];
 
   beforeEach(() => {
-    logger = new Log();
+    state = [];
+    stateMethods = {
+      getState: () => [...state],
+      setState: (newState: LogEntry[]) => {
+        state = [...newState];
+      },
+      add: (entry: LogEntry) => {
+        state.push(entry);
+      },
+    };
+    logger = new Log(stateMethods);
     vi.restoreAllMocks();
   });
 
@@ -17,7 +30,7 @@ describe("Log", () => {
 
     logger.add("event.key");
 
-    const entries = logger.get();
+    const entries = logger.getState();
     expect(entries).toHaveLength(1);
     expect(entries[0]).toEqual<LogEntry>({
       key: "event.key",
@@ -34,7 +47,7 @@ describe("Log", () => {
 
     logger.add("event.with.params", params);
 
-    const entries = logger.get();
+    const entries = logger.getState();
     expect(entries).toHaveLength(1);
     expect(entries[0]).toEqual<LogEntry>({
       key: "event.with.params",
@@ -43,14 +56,14 @@ describe("Log", () => {
     });
   });
 
-  test("get() возвращает копию массива, а не оригинал", () => {
+  test("getState() возвращает копию массива, а не оригинал", () => {
     vi.spyOn(Date.prototype, "toLocaleString").mockReturnValue("T");
     logger.add("Msg");
 
-    const first = logger.get();
+    const first = logger.getState();
     first.push({ key: "hax", params: undefined, timestamp: "X" });
 
-    const second = logger.get();
+    const second = logger.getState();
     expect(second).toHaveLength(1);
     expect(second[0]).toEqual<LogEntry>({
       key: "Msg",
@@ -62,9 +75,10 @@ describe("Log", () => {
   test("clear() очищает весь лог", () => {
     vi.spyOn(Date.prototype, "toLocaleString").mockReturnValue("X");
     logger.add("A");
-    expect(logger.get()).toHaveLength(1);
 
-    logger.clear();
-    expect(logger.get()).toHaveLength(0);
+    expect(logger.getState()).toHaveLength(1);
+
+    logger.setState([]);
+    expect(logger.getState()).toHaveLength(0);
   });
 });

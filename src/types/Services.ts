@@ -1,4 +1,5 @@
 import { IClue } from "domain/Clue";
+import { IGameFlow } from "application/GameFlow";
 import { IGate } from "domain/Gate";
 import { IMarket } from "domain/Market";
 import { IPlayer } from "domain/Player";
@@ -10,4 +11,5 @@ export type Services = {
   clue: IClue;
   player: IPlayer;
   gate: IGate;
+  gameFlow: IGameFlow;
 };
