@@ -1,0 +1,39 @@
+[
+  {
+    "id": "encounter_01",
+    "name": "Stealthy Exit",
+    "type": "encounter",
+    "gameSet": "base",
+    "text": "Прежде чем вынести украденный товар из магазина, вы хотите убедиться, что вас никто не заметил.",
+    "locationType": "city",
+    "test": { "skill": "observation", "modifier": 0 },
+    "successEffects": {
+      "type": "oneOf",
+      "effects": [
+        { "type": "takeAssetFromReserve", "assetType": "any" },
+        { "type": "takeRandomAsset", "cardType": "asset" }
+      ]
+    },
+    "failureEffects": {
+      "type": "oneOf",
+      "effects": [{ "type": "addCondition", "conditionType": "confinement" }]
+    }
+  },
+  {
+    "id": "encounter_02",
+    "name": "Police Bribe",
+    "type": "encounter",
+    "gameSet": "base",
+    "text": "Продажные полицейские вымогают у вас взятку. Вы просите знакомых помочь вам с этой проблемой.",
+    "locationType": "city",
+    "test": { "skill": "influence", "modifier": 0 },
+    "successEffects": {
+      "type": "oneOf",
+      "effects": [{ "type": "placeClue" }]
+    },
+    "failureEffects": {
+      "type": "oneOf",
+      "effects": [{ "type": "addCondition", "conditionType": "dept" }]
+    }
+  }
+]

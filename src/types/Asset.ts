@@ -1,6 +1,5 @@
 import { Card } from "./Card";
-
-export type Skill = "lore" | "influence" | "observation" | "strength" | "sill";
+import { Skill } from "./SkillSet";
 
 export type EffectContext =
   | "researchEncounters"
@@ -18,7 +17,7 @@ export type EffectType =
   | "gainClue"
   | "skillModification";
 
-export type Effect = {
+export type AssetEffect = {
   type: EffectType;
   skill?: Skill;
   contexts: EffectContext[];
@@ -27,7 +26,7 @@ export type Effect = {
     diceCount?: number;
     diceRoll?: {
       successValues: number[];
-      result: Effect[];
+      result: AssetEffect[];
     };
     additionalRecovery?: number;
     amount?: number;
@@ -56,6 +55,6 @@ export type Asset = Card & {
   hasResultManipulation: boolean;
   hasDiscardEffect: boolean;
   hasReckoning: boolean;
-  effects?: Effect[];
+  effects?: AssetEffect[];
   tags?: Tag[];
 };

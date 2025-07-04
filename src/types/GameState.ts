@@ -12,4 +12,8 @@ export type GameState = {
   players: PlayerState[];
   openGates: string[];
   clues: string[];
+  pendingEncounter?: {
+    playerId: string;
+    encounterId: string;
+  } | null;
 };

@@ -2,6 +2,8 @@ import { PlayerState } from "types/PlayerState";
 import { IPlayer } from "./IPlayer";
 import { ILog } from "infrastructure/Log";
 import { IPlayerState } from "./IPlayerState";
+import { Skill } from "types/SkillSet";
+import { clampValue } from "helpers/clampValue";
 
 const DEFAULT_MAX_ACTIONS = 2;
 
@@ -20,6 +22,25 @@ export class Player implements IPlayer {
 
     sorted.forEach((p) => this.stateSvc.update(p));
     this.logger.add("player.all.initialize");
+  }
+
+  modifySkill(playerId: string, skill: Skill, value: number): boolean {
+    const player = this.stateSvc.getById(playerId);
+
+    if (!player) return false;
+
+    const oldValue = player.skillModifiers[skill];
+
+    player.skillModifiers[skill] = clampValue(oldValue + value, -2, 2);
+    this.logger.add("player.modifySkill", {
+      playerId,
+      skill,
+      oldValue,
+      newValue: player.skillModifiers[skill],
+    });
+    this.stateSvc.update(player);
+
+    return true;
   }
 
   canTakeAction(playerId: string, actionType: string): boolean {
@@ -153,28 +174,6 @@ export class Player implements IPlayer {
     this.stateSvc.update(player);
 
     return true;
-  }
-
-  resolveEncounter(playerId: string): string {
-    const player = this.stateSvc.getById(playerId);
-
-    if (!player) return "Игрок не найден";
-
-    const loc = player.locationId;
-    let type = "generic";
-
-    if (loc.startsWith("city")) type = "city";
-    else if (loc.startsWith("other")) type = "otherWorld";
-    else if (loc === "expedition") type = "expedition";
-    else if (loc === "mysticRuins") type = "mysticRuins";
-
-    this.logger.add("player.resolveEncounter", {
-      playerId,
-      location: loc,
-      encounterType: type,
-    });
-
-    return type;
   }
 
   getState(): PlayerState[] {

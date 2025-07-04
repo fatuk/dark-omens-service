@@ -1,3 +1,5 @@
+import { SkillSet } from "./SkillSet";
+
 export type PlayerState = {
   id: string;
   userId: string;
@@ -17,5 +19,7 @@ export type PlayerState = {
   resourceCount: number;
   isDefeated: boolean;
   isEliminated: boolean;
+  skillSet: SkillSet;
+  skillModifiers: SkillSet;
   deathReason?: "injury" | "sanity" | null;
 };

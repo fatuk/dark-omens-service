@@ -4,6 +4,7 @@ import { IGate } from "domain/Gate";
 import { IMarket } from "domain/Market";
 import { IPlayer } from "domain/Player";
 import { ILog } from "infrastructure/Log";
+import { IEncounter } from "application/Encounter";
 
 export type Services = {
   log: ILog;
@@ -12,4 +13,5 @@ export type Services = {
   player: IPlayer;
   gate: IGate;
   gameFlow: IGameFlow;
+  encounter: IEncounter;
 };

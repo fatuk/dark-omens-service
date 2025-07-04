@@ -1,6 +1,7 @@
 import { Asset } from "./Asset";
 import { Clue } from "./Clue";
 import { Condition } from "./Condition";
+import { Encounter } from "./Encounter";
 import { Gate } from "./Gate";
 import { Spell } from "./Spell";
 
@@ -10,6 +11,7 @@ export type CardMap = {
   condition: Condition;
   gate: Gate;
   clue: Clue;
+  encounter: Encounter;
 };
 
 export type CardType = keyof CardMap;

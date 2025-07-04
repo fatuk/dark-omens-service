@@ -9,19 +9,19 @@ export class GameFlow implements IGameFlow {
     private readonly logger: ILog
   ) {}
 
-  nextPhase(): void {
+  nextPhase(): boolean {
     const turn = this.state.getTurn();
 
     switch (turn.phase) {
       case "Action":
         this.state.setPhase("Encounter");
         this.state.setCurrentInvestigatorId(turn.leadInvestigatorId);
-        this.logger.add("Фаза: встречи");
+        this.logger.add("gameflow.phase.set.encounter");
         break;
       case "Encounter":
         this.state.setPhase("Mythos");
         this.state.setCurrentInvestigatorId(turn.leadInvestigatorId);
-        this.logger.add("Фаза: мифов");
+        this.logger.add("gameflow.phase.set.mythos");
         break;
       case "Mythos":
         const newRound = turn.round + 1;
@@ -29,40 +29,53 @@ export class GameFlow implements IGameFlow {
         const nextLead = this.getNextPlayerId(turn.leadInvestigatorId);
         this.state.setLeadInvestigatorId(nextLead);
         this.state.setCurrentInvestigatorId(nextLead);
-        this.logger.add(`Раунд ${newRound}`);
+        this.logger.add("gameflow.round.increment", {
+          round: newRound,
+        });
         break;
     }
+
+    return true;
   }
 
-  nextInvestigator(): void {
+  nextInvestigator(): boolean {
     const turn = this.state.getTurn();
     const players = this.state.getPlayers();
     const idx = players.findIndex((p) => p.id === turn.currentInvestigatorId);
     const next = players[(idx + 1) % players.length];
+
     this.state.setCurrentInvestigatorId(next.id);
     this.logger.add("gameFlow.nextInvestigator", {
       currentInvestigatorId: turn.currentInvestigatorId,
-      nextInvestigatorId: next.id,
     });
+
+    return true;
   }
 
-  passLeadInvestigator(playerId: string): void {
+  passLeadInvestigator(playerId: string): boolean {
+    const player = this.state.getPlayers().find((p) => p.id === playerId);
+
+    if (!player) return false;
+
     this.state.setLeadInvestigatorId(playerId);
     this.logger.add("gameFlow.passLeadInvestigator", {
       playerId,
-      leadInvestigatorId: this.state.getTurn().leadInvestigatorId,
     });
+
+    return true;
   }
 
   getTurn(): Turn {
     return this.state.getTurn();
   }
 
-  setTurn(turn: Turn): void {
+  setTurn(turn: Turn): boolean {
     this.state.setPhase(turn.phase);
     this.state.setRound(turn.round);
     this.state.setLeadInvestigatorId(turn.leadInvestigatorId);
     this.state.setCurrentInvestigatorId(turn.currentInvestigatorId);
+
+    return true;
   }
 
   private getNextPlayerId(playerId: string): string {

@@ -78,6 +78,28 @@ describe("Infrastructure Deck (unit)", () => {
     expect(deck.drawByType(firstAsset!.type)).not.toEqual(firstAsset);
   });
 
+  it("drawByField вытягивает первую подходящую карту по полю и удаляет её из стопки", () => {
+    assets[0].name = "Unique";
+    assets[1].name = "Common";
+    assets[2].name = "Unique";
+    deck.initialize(assets);
+
+    const drawn = deck.drawByField("name", "Unique");
+    expect(drawn).not.toBeNull();
+    expect(drawn!.name).toBe("Unique");
+
+    const state = deck.getState();
+    expect(state.drawPile).not.toContain(drawn!.id);
+  });
+
+  it("drawByField возвращает null, если нет подходящей карты", () => {
+    assets.forEach((a) => (a.name = "Basic"));
+    deck.initialize(assets);
+
+    const result = deck.drawByField("name", "Nonexistent");
+    expect(result).toBeNull();
+  });
+
   it("peek не изменяет стейт и возвращает верхние count карт", () => {
     deck.initialize(assets);
     const top2 = deck.peek(2);

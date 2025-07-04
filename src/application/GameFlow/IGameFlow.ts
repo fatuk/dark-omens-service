@@ -1,9 +1,9 @@
 import { Turn } from "types/Turn";
 
 export interface IGameFlow {
-  nextPhase(): void;
-  nextInvestigator(): void;
-  passLeadInvestigator(playerId: string): void;
+  nextPhase(): boolean;
+  nextInvestigator(): boolean;
+  passLeadInvestigator(playerId: string): boolean;
   getTurn(): Turn;
-  setTurn(turn: Turn): void;
+  setTurn(turn: Turn): boolean;
 }

@@ -10,10 +10,10 @@ import { Services } from "types/Services";
 import { resolveCards } from "helpers/resolveCards";
 import { IAllDecks } from "infrastructure/AllDecks";
 import { LogEntry } from "types/Log";
+import { Encounter, EncounterEffect } from "types/Encounter";
 
 export class Game {
   private decks: IAllDecks;
-  private openGates: string[] = [];
   private services: Services;
 
   constructor(decks: IAllDecks, players: PlayerState[], services: Services) {
@@ -76,9 +76,10 @@ export class Game {
       market: this.services.market.getState().map((c) => c.id),
       log: this.services.log.getState(),
       players: this.services.player.getState(),
-      openGates: [...this.openGates],
+      openGates: this.services.gate.getState().map((g) => g.id),
       decks: this.decks.getState(),
       clues: this.services.clue.getState().map((c) => c.id),
+      pendingEncounter: this.services.encounter.getState(),
     };
   }
 
@@ -125,10 +126,6 @@ export class Game {
     this.services.player.resetActions();
   }
 
-  resolveEncounter(playerId: string): string {
-    return this.services.player.resolveEncounter(playerId);
-  }
-
   movePlayer(playerId: string, location: string): boolean {
     return this.services.player.move(playerId, location);
   }
@@ -149,24 +146,69 @@ export class Game {
     return this.services.player.loseSanity(playerId, amount);
   }
 
-  getEncounterType(locationId: string): string {
-    if (locationId.startsWith("city")) return "city";
-    if (locationId.startsWith("other")) return "otherWorld";
-    if (locationId === "expedition") return "expedition";
-    if (locationId === "mysticRuins") return "mysticRuins";
-    return "generic";
+  startEncounter(locationType: Encounter["locationType"]): Encounter | null {
+    const turn = this.services.gameFlow.getTurn();
+
+    if (turn.phase !== "Encounter" || !turn.currentInvestigatorId) {
+      return null;
+    }
+
+    const playerId = turn.currentInvestigatorId;
+    const encounterCard = this.services.encounter.start(playerId, locationType);
+
+    if (encounterCard) {
+      this.services.log.add("encounter.started", {
+        playerId,
+        encounterId: encounterCard.id,
+      });
+    }
+
+    return encounterCard;
+  }
+
+  getPendingEncounter(): Encounter | null {
+    return this.services.encounter.getEncounter();
+  }
+
+  resolveEncounter(success: boolean): EncounterEffect | null {
+    const turn = this.services.gameFlow.getTurn();
+
+    if (turn.phase !== "Encounter" || !turn.currentInvestigatorId) {
+      return null;
+    }
+
+    const pending = this.services.encounter.getState();
+
+    if (!pending || pending.playerId !== turn.currentInvestigatorId) {
+      return null;
+    }
+
+    const effect = this.services.encounter.resolve(success);
+
+    effect?.effects?.forEach((effect) =>
+      console.log(`Encounter effect: }`, effect)
+    );
+
+    this.services.encounter.setState(null);
+    this.services.log.add("encounter.completed", {
+      playerId: pending.playerId,
+      encounterId: pending.encounterId,
+      success,
+    });
+
+    return effect;
   }
 
   nextPhase() {
-    this.services.gameFlow.nextPhase();
+    return this.services.gameFlow.nextPhase();
   }
 
   nextInvestigator() {
-    this.services.gameFlow.nextInvestigator();
+    return this.services.gameFlow.nextInvestigator();
   }
 
   passLeadInvestigator(playerId: string) {
-    this.services.gameFlow.passLeadInvestigator(playerId);
+    return this.services.gameFlow.passLeadInvestigator(playerId);
   }
 
   restoreFromState(
@@ -182,6 +224,7 @@ export class Game {
     this.services.clue.setState(state.clues);
     this.services.player.setState(state.players);
     this.services.log.setState(state.log);
+    this.services.encounter.setState(state.pendingEncounter || null);
   }
 
   apply(action: GameAction) {

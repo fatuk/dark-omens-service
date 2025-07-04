@@ -140,30 +140,6 @@ describe("Domain Player (unit)", () => {
     });
   });
 
-  test("resolveEncounter определяет тип встречи по локации", () => {
-    const [p] = getFakePlayers(1);
-    svc.initialize([p]);
-
-    const cases: Record<string, string> = {
-      cityPark: "city",
-      otherPlace: "otherWorld",
-      expedition: "expedition",
-      mysticRuins: "mysticRuins",
-      nowhere: "generic",
-    };
-
-    for (const [loc, expectType] of Object.entries(cases)) {
-      stateSvc.getById(p.id)!.locationId = loc;
-      const t = svc.resolveEncounter(p.id);
-      expect(t).toBe(expectType);
-      expect(logger.add).toHaveBeenCalledWith("player.resolveEncounter", {
-        playerId: p.id,
-        encounterType: expectType,
-        location: loc,
-      });
-    }
-  });
-
   test("setState очищает и восстанавливает игроков", () => {
     const players = getFakePlayers(3);
     svc.initialize(players);

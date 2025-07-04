@@ -12,6 +12,7 @@ export interface IDeck<T extends Card> {
   discard(card: T): void;
   removeFromGame(card: T): void;
   drawByType(type: string): T | null;
+  drawByField<K extends keyof T>(field: K, value: T[K]): T | null;
   peek(count?: number): T[];
   returnToTop(card: T): void;
   returnToBottom(card: T): void;

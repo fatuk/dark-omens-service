@@ -19,6 +19,8 @@ import { Services } from "types/Services";
 import { PlayerState } from "types/PlayerState";
 import { GamePhase } from "types/GamePhase";
 import { LogEntry } from "types/Log";
+import { EncounterRepository } from "repositories/EncounterRepository";
+import { Encounter, IEncounterState } from "application/Encounter";
 
 interface customWindow extends Window {
   game?: any;
@@ -27,22 +29,23 @@ interface customWindow extends Window {
 declare const window: customWindow;
 
 const init = async () => {
-  const [assets, spells, conditions, gates, clues, players] = await Promise.all(
-    [
+  const [assets, spells, conditions, gates, clues, players, encounters] =
+    await Promise.all([
       new AssetRepository().getAll(),
       new SpellRepository().getAll(),
       new ConditionRepository().getAll(),
       new GateRepository().getAll(),
       new ClueRepository().getAll(),
       new PlayerRepository().getAll(),
-    ]
-  );
+      new EncounterRepository().getAll(),
+    ]);
 
   const assetDb = new Map(assets.map((c) => [c.id, c]));
   const spellDb = new Map(spells.map((c) => [c.id, c]));
   const conditionDb = new Map(conditions.map((c) => [c.id, c]));
   const gateDb = new Map(gates.map((c) => [c.id, c]));
   const clueDb = new Map(clues.map((c) => [c.id, c]));
+  const encounterDb = new Map(encounters.map((c) => [c.id, c]));
 
   const allDecks = new AllDecks({
     asset: { deck: assets, db: assetDb },
@@ -53,6 +56,7 @@ const init = async () => {
     },
     gate: { deck: gates, db: gateDb },
     clue: { deck: clues, db: clueDb },
+    encounter: { deck: encounters, db: encounterDb },
   });
 
   const gameState: GameState = {
@@ -136,9 +140,22 @@ const init = async () => {
     getPlayers: () => gameState.players,
   };
 
+  const encounterState: IEncounterState = {
+    setState: (state) => {
+      gameState.pendingEncounter = state;
+    },
+    getState: () => {
+      return gameState.pendingEncounter;
+    },
+    getEncounterById: (id: string) => {
+      return encounterDb.get(id) || null;
+    },
+  };
+
   const assetDeck = allDecks.getManager("asset");
   const clueDeck = allDecks.getManager("clue");
   const gateDeck = allDecks.getManager("gate");
+  const encounterDeck = allDecks.getManager("encounter");
 
   const log = new Log(logState);
   const market = new Market(assetDeck, marketState, log);
@@ -146,6 +163,7 @@ const init = async () => {
   const player = new Player(playerState, log);
   const gate = new Gate(gateDeck, gateState, log);
   const gameFlow = new GameFlow(gameFlowState, log);
+  const encounter = new Encounter(encounterDeck, encounterState, log);
 
   const services: Services = {
     log,
@@ -154,6 +172,7 @@ const init = async () => {
     player,
     gate,
     gameFlow,
+    encounter,
   };
 
   const game = new Game(allDecks, players, services);

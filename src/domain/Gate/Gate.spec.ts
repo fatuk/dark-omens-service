@@ -1,104 +1,108 @@
-import { describe, beforeEach, test, expect, vi } from "vitest";
-import type { Gate as GateCard } from "types/Gate";
-import { ILog } from "infrastructure/Log";
-import { IGate } from "./IGate";
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { Gate } from "./Gate";
-import { getFakeGates } from "tests/helpers/getFakeGates";
-import { testLog } from "tests/testLog";
-import { IGateState } from "./IGateState";
+import type { Gate as GateCard } from "types/Gate";
 
-describe("Domain Gate (unit)", () => {
-  let state: IGateState;
-  let deck: { draw: () => GateCard | null; discard: (c: GateCard) => void };
-  let logger: ILog;
-  let svc: IGate;
+vi.mock("helpers/resolveCards", () => ({
+  resolveCards: (ids: string[], getter: (id: string) => GateCard) =>
+    ids.map(getter),
+}));
+
+describe("Gate", () => {
+  let deck: {
+    draw: () => GateCard | null;
+    discard: (card: GateCard) => void;
+  };
+  let state: {
+    getGateIds: () => string[];
+    setGateIds: (ids: string[]) => void;
+    getGateById: (id: string) => GateCard | undefined;
+  };
+  let logger: {
+    add: (event: string, payload: Record<string, any>) => void;
+  };
+  let gate: Gate;
 
   beforeEach(() => {
-    let ids: string[] = [];
-    vi.clearAllMocks();
-    const allGates = getFakeGates(5);
-
-    state = {
-      getGateIds: () => [...ids],
-      setGateIds: (newIds: string[]) => {
-        ids = [...newIds];
-      },
-      getGateById: (id: string) => allGates.find((g) => g.id === id),
-    };
-
     deck = {
       draw: vi.fn(),
       discard: vi.fn(),
     };
-
-    logger = testLog;
-
-    svc = new Gate(deck as any, state, logger);
+    state = {
+      getGateIds: vi.fn(),
+      setGateIds: vi.fn(),
+      getGateById: vi.fn(),
+    };
+    logger = {
+      add: vi.fn(),
+    };
+    gate = new Gate(deck as any, state as any, logger as any);
+    vi.clearAllMocks();
   });
 
-  test("draw возвращает ID новых врат и логирует", () => {
-    const gates = getFakeGates(1);
-    const gate = gates[0];
-    (deck.draw as any).mockReturnValueOnce(gate);
+  it("draw() возвращает null, если колода пуста", () => {
+    (deck.draw as Mock).mockReturnValue(null);
+    expect(gate.draw()).toBeNull();
+    expect(state.setGateIds).not.toHaveBeenCalled();
+    expect(logger.add).not.toHaveBeenCalled();
+  });
 
-    const result = svc.draw();
-    expect(result).toBe(gates[0].id);
-    expect(state.getGateIds()).toEqual([gate.id]);
+  it("draw() берёт карту, обновляет state и логирует", () => {
+    const card: GateCard = { id: "g1", location: "loc", color: "red" } as any;
+    (deck.draw as Mock).mockReturnValue(card);
+    (state.getGateIds as Mock).mockReturnValue(["g0"]);
+    const result = gate.draw();
+    expect(result).toBe("g1");
+    expect(state.setGateIds).toHaveBeenCalledWith(["g0", "g1"]);
     expect(logger.add).toHaveBeenCalledWith("gate.draw", {
-      gateId: gate.id,
-      gateLocation: gate.location,
-      gateColor: gate.color,
+      gateId: "g1",
+      gateLocation: "loc",
+      gateColor: "red",
     });
   });
 
-  test("draw возвращает null, если колода пуста", () => {
-    (deck.draw as any).mockReturnValue(null);
-    const result = svc.draw();
-    expect(result).toBeNull();
-    expect(state.getGateIds()).toEqual([]);
+  it("discard() возвращает false, если id нет в state", () => {
+    (state.getGateIds as Mock).mockReturnValue(["g1"]);
+    expect(gate.discard("x")).toBe(false);
+    expect(deck.discard).not.toHaveBeenCalled();
     expect(logger.add).not.toHaveBeenCalled();
   });
 
-  test("discard закрывает врата и логирует", () => {
-    const gates = getFakeGates(2);
-    state.setGateIds([gates[0].id, gates[1].id]);
-    state.getGateById = (id: string) => gates.find((g) => g.id === id);
+  it("discard() возвращает false, если state.getGateById вернул undefined", () => {
+    (state.getGateIds as Mock).mockReturnValue(["g1"]);
+    (state.getGateById as Mock).mockReturnValue(undefined);
+    expect(gate.discard("g1")).toBe(false);
+    expect(deck.discard).not.toHaveBeenCalled();
+    expect(logger.add).not.toHaveBeenCalled();
+  });
 
-    const removed = svc.discard(gates[0].id);
-    expect(removed).toBe(true);
-    expect(state.getGateIds()).toEqual([gates[1].id]);
+  it("discard() убирает карту из state, кладёт в discard-потомок и логирует", () => {
+    const card: GateCard = { id: "g1", location: "loc", color: "blue" } as any;
+    (state.getGateIds as Mock).mockReturnValue(["g1", "g2"]);
+    (state.getGateById as Mock).mockReturnValue(card);
+    expect(gate.discard("g1")).toBe(true);
+    expect(state.setGateIds).toHaveBeenCalledWith(["g2"]);
+    expect(deck.discard).toHaveBeenCalledWith(card);
     expect(logger.add).toHaveBeenCalledWith("gate.discard", {
-      gateId: gates[0].id,
-      gateLocation: gates[0].location,
-      gateColor: gates[0].color,
+      gateId: "g1",
+      gateLocation: "loc",
+      gateColor: "blue",
     });
   });
 
-  test("discard возвращает false для несуществующего ID", () => {
-    state.setGateIds(["x", "y"]);
-    const removed = svc.discard("nonexistent");
-    expect(removed).toBe(false);
-    expect(logger.add).not.toHaveBeenCalled();
+  it("getState() возвращает массив карт через resolveCards", () => {
+    (state.getGateIds as Mock).mockReturnValue(["a", "b"]);
+    (state.getGateById as Mock).mockImplementation(
+      (id: string) => ({ id, location: id, color: id } as any)
+    );
+    const arr = gate.getState();
+    expect(arr).toEqual([
+      { id: "a", location: "a", color: "a" },
+      { id: "b", location: "b", color: "b" },
+    ]);
   });
 
-  // test("getState возвращает все валидные Gate[]", () => {
-  //   const gates = getFakeGates(3);
-
-  //   svc.setState(gates.map((g) => g.id));
-
-  //   const all = svc.getState();
-
-  //   expect(all).toEqual([gates[0], gates[2]]);
-  // });
-
-  // test("setState восстанавливает заранее заданный список ID", () => {
-  //   const gates = getFakeGates(3);
-  //   state.getGateById = (id) => gates.find((g) => g.id === id);
-
-  //   const restoreIds = [gates[2].id, gates[0].id];
-  //   svc.setState(restoreIds);
-
-  //   const restored = svc.getState();
-  //   expect(restored).toEqual([gates[2], gates[0]]);
-  // });
+  it("setState() вызывает state.setGateIds с копией массива", () => {
+    gate.setState(["x", "y"]);
+    expect(state.setGateIds).toHaveBeenCalledWith(["x", "y"]);
+  });
 });

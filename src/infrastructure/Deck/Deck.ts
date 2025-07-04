@@ -78,6 +78,13 @@ export class Deck<T extends Card> implements IDeck<T> {
     return card;
   }
 
+  drawByField<K extends keyof T>(field: K, value: T[K]): T | null {
+    const index = this.deck.drawPile.findIndex((card) => card[field] === value);
+    if (index === -1) return null;
+    const [card] = this.deck.drawPile.splice(index, 1);
+    return card;
+  }
+
   peek(count = 1): T[] {
     return this.deck.drawPile.slice(-count);
   }
