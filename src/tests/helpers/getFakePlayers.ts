@@ -22,5 +22,19 @@ export const getFakePlayers = (count: number): PlayerState[] => {
     isDefeated: false,
     isEliminated: false,
     deathReason: null,
+    skillSet: {
+      lore: faker.number.int({ min: 0, max: 5 }),
+      influence: faker.number.int({ min: 0, max: 5 }),
+      observation: faker.number.int({ min: 0, max: 5 }),
+      strength: faker.number.int({ min: 0, max: 5 }),
+      will: faker.number.int({ min: 0, max: 5 }),
+    },
+    skillModifiers: {
+      lore: 0,
+      influence: 0,
+      observation: 0,
+      strength: 0,
+      will: 0,
+    },
   }));
 };
